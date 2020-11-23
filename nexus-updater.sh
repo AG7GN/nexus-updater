@@ -1074,6 +1074,7 @@ EOF
      		;;
      	nexus-rmsgw)
      		CheckDepInstalled "xutils-dev libxml2 libxml2-dev libncurses5-dev python-requests"
+     		echo "Depencies Checked for nexus-rmsgw"
      		NexusLocalRepoUpdate nexus-rmsgw $NEXUS_RMSGW_GIT_URL
      		;;
       wsjtx|js8call)
