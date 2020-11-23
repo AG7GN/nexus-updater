@@ -647,9 +647,9 @@ $SYNTAX && set -n
 # Run in debug mode, if set
 $DEBUG && set -x 
 
-(( $# == 0 )) && GUI=$TRUE
+(( $# == 0 )) && GUI=$TRUE || GUI=$FALSE
 
-echo "GUI=$GUI"
+echo "GUI=$GUI  Number of apps: $#"
 
 CheckInternet
 
