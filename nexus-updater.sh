@@ -666,6 +666,7 @@ run <b>Raspberry > Hamradio > Nexus Updater</b> again." \
   		echo >&2
   		echo >&2 "A new version of this script has been installed. Please run it again."
   		echo >&2
+  		exit 0
   	fi
 fi
 
