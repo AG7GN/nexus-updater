@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Nexus Updater
+GenericName=Keep your Nexus up to date
+Comment=Keep your Nexus up to date
+Exec=lxterminal --geometry=90x30 -t "Nexus Updater" -e "/usr/local/bin/nexus-updater.sh"
+Icon=/usr/share/raspberrypi-artwork/raspitr.png
+Terminal=false
+Type=Application
+Categories=HamRadio;
+Comment[en_US]=Keep your Nexus up to date
