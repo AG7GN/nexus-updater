@@ -438,7 +438,7 @@ function Help () {
 	APPS[autohotspot]="https://github.com/AG7GN/autohotspot/blob/master/README.md"
 	APPS[710]="https://github.com/AG7GN/kenwood/blob/master/README.md"
 	APPS[pmon]="https://www.p4dragon.com/en/PMON.html"
-	APPS[nexus-rmsgw]="https://github.com/AG7GN/rmsgw/blob/master/README.md"
+	APPS[nexus-rmsgw]="https://github.com/AG7GN/nexus-rmsgw/blob/master/README.md"
 	APPS[js8call]="http://js8call.com"
 	APPS[linbpq]="http://www.cantab.net/users/john.wiseman/Documents/InstallingLINBPQ.html"
 	APPS[linpac]="https://sourceforge.net/projects/linpac/"
