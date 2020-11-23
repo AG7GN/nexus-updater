@@ -1073,6 +1073,7 @@ EOF
 			NexusLocalRepoUpdate pmon $PMON_GIT_URL
      		;;
      	nexus-rmsgw)
+     		CheckDepInstalled "xutils-dev libxml2 libxml2-dev libncurses5-dev python-requests"
      		NexusLocalRepoUpdate nexus-rmsgw $NEXUS_RMSGW_GIT_URL
      		;;
       wsjtx|js8call)
