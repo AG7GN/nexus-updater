@@ -649,8 +649,6 @@ $DEBUG && set -x
 
 (( $# == 0 )) && GUI=$TRUE || GUI=$FALSE
 
-echo "GUI=$GUI  Number of apps: $#"
-
 CheckInternet
 
 # Check for self updates requested
