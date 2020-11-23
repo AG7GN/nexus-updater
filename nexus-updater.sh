@@ -761,7 +761,7 @@ then
 #	echo >&2 "apt cache less than an hour old"
 fi
 
-CheckDepInstalled "extra-xdg-menus bc dnsutils libgtk-3-bin jq moreutils exfat-utils"
+CheckDepInstalled "extra-xdg-menus bc dnsutils libgtk-3-bin jq moreutils exfat-utils build-essential autoconf automake libtool checkinstall git"
 
 for APP in $APPS
 do
@@ -857,7 +857,7 @@ do
 			if (LocalRepoUpdate Xastir $XASTIR_GIT_URL) || [[ $FORCE == $TRUE ]]
 			then
 				echo "Building $APP from source"			
-				CheckDepInstalled "build-essential git autoconf automake xorg-dev graphicsmagick gv libmotif-dev libcurl4-openssl-dev gpsman gpsmanshp libpcre3-dev libproj-dev libdb5.3-dev python-dev libwebp-dev shapelib libshp-dev festival festival-dev libgeotiff-dev libgraphicsmagick1-dev xfonts-100dpi xfonts-75dpi"
+				CheckDepInstalled "xorg-dev graphicsmagick gv libmotif-dev libcurl4-openssl-dev gpsman gpsmanshp libpcre3-dev libproj-dev libdb5.3-dev python-dev libwebp-dev shapelib libshp-dev festival festival-dev libgeotiff-dev libgraphicsmagick1-dev xfonts-100dpi xfonts-75dpi"
 				xset +fp /usr/share/fonts/X11/100dpi,/usr/share/fonts/X11/75dpi
             cd $SRC_DIR/Xastir
 	         ./bootstrap.sh
