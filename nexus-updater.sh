@@ -991,7 +991,6 @@ EOF
         		echo >&2 "============= $APP installed and up to date ============="
 				continue
 			fi
-			exit 0
 			# Install or update needed. Get and install the package
 			mkdir -p $APP
 			rm -f $APP/*
