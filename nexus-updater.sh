@@ -1074,8 +1074,7 @@ EOF
 			NexusLocalRepoUpdate pmon $PMON_GIT_URL
      		;;
      	nexus-rmsgw)
-     		echo "Handling $APP"
-     		# LocalRepoUpdate nexus-rmsgw $NEXUS_RMSGW_GIT_URL
+     		LocalRepoUpdate nexus-rmsgw $NEXUS_RMSGW_GIT_URL
      		;;
       wsjtx|js8call)
       	[[ $APP == "wsjtx" ]] && URL="$WSJTX_URL" || URL="$JS8CALL_URL"
