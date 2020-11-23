@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #================================================================
 # HEADER
 #================================================================
@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.0
+#-    version         ${SCRIPT_NAME} 2.0.1
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -485,7 +485,7 @@ PIARDOP_URL="http://www.cantab.net/users/john.wiseman/Downloads/Beta/piardopc"
 PIARDOP2_URL="http://www.cantab.net/users/john.wiseman/Downloads/Beta/piardop2"
 PAT_GIT_URL="$GITHUB_URL/la5nta/pat/releases"
 CHIRP_URL="https://trac.chirp.danplanet.com/chirp_daily/LATEST"
-UPDATER_GIT_URL="$GITHUB_URL/AG7GN/hamapps"
+NEXUS_UPDATER_GIT_URL="$GITHUB_URL/AG7GN/nexus-updater"
 NEXUSUTILS_GIT_URL="$GITHUB_URL/AG7GN/nexus-utilities"
 IPTABLES_GIT_URL="$GITHUB_URL/AG7GN/nexus-iptables"
 AUTOHOTSPOT_GIT_URL="$GITHUB_URL/AG7GN/autohotspot"
@@ -652,13 +652,13 @@ $DEBUG && set -x
 CheckInternet
 
 # Check for self updates requested
-if [[ $SELF_UPDATE == $TRUE ]] && NexusLocalRepoUpdate nexus-updater $UPDATER_GIT_URL
+if [[ $SELF_UPDATE == $TRUE ]] && NexusLocalRepoUpdate nexus-updater $NEXUS_UPDATER_GIT_URL
 then
 	if [[ $GUI == $TRUE ]]
 	then
 		yad --center --title="$TITLE" --info --borders=30 \
-		--no-wrap --text="A new version of this script has been installed.\n\nPlease \
-run <b>Raspberry > Hamradio > Update Pi and Ham Apps</b> again." \
+		--no-wrap --text="A new version of the Nexus Updater has been installed.\n\nPlease \
+run <b>Raspberry > Hamradio > Nexus Updater</b> again." \
 		--buttons-layout=center \
 		--button=Close:0
   		exit 0
@@ -761,6 +761,8 @@ then
 #	echo >&2 "apt cache less than an hour old"
 fi
 
+CheckDepInstalled "extra-xdg-menus bc dnsutils libgtk-3-bin jq moreutils exfat-utils"
+
 for APP in $APPS
 do
 	cd $SRC_DIR
@@ -776,7 +778,7 @@ do
    		;;
 
    	nexus-updater)
-   		NexusLocalRepoUpdate nexus-updater $UPDATER_GIT_URL
+   		NexusLocalRepoUpdate nexus-updater $NEXUS_UPDATER_GIT_URL
    		;;
 
       fldigi|flamp|flmsg|flrig|flwrap)
@@ -903,7 +905,7 @@ EOF
 		direwolf)
 			if (LocalRepoUpdate $APP $DIREWOLF_GIT_URL) || [[ $FORCE == $TRUE ]]
 			then
-			   CheckDepInstalled "git gcc g++ make cmake libasound2-dev libudev-dev"
+			   CheckDepInstalled "git gcc g++ make cmake libasound2-dev libudev-dev gpsd libgps-dev"
 				InstallHamlib
 				cd direwolf
 				mkdir -p build && cd build
