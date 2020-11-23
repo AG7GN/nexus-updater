@@ -649,6 +649,8 @@ $DEBUG && set -x
 
 (( $# == 0 )) && GUI=$TRUE
 
+echo "GUI=$GUI"
+
 CheckInternet
 
 # Check for self updates requested
