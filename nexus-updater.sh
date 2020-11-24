@@ -864,7 +864,7 @@ do
       		CONFIGURE="./configure"
       		if [[ $APP == "fldigi" ]]
       		then
-      			PI_MODEL=$(piModel)
+      			PI_MODEL=$(PiModel)
       			[[ ! -z $PI_MODEL ]] && CONFIGURE="./configure --enable-optimizations=$PI_MODEL"
       		fi
       		[[ $FORCE == $TRUE ]] && make clean
