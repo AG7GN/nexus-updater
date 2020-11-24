@@ -426,6 +426,7 @@ function CheckDepInstalled() {
 	# Takes 1 argument: a string containing the apps to check with apps separated by space
 	#MISSING=$(dpkg --get-selections $1 2>&1 | grep -v 'install$' | awk '{ print $6 }')
 	#MISSING=$(dpkg-query -W -f='${Package} ${Status}\n' $1 2>&1 | grep 'not-installed$' | awk '{ print $1 }')
+	echo >&2 "Checking dependencies..."
 	MISSING=""
    for P in $1
    do
@@ -438,6 +439,7 @@ function CheckDepInstalled() {
 	then
 		sudo apt-get -y install $MISSING || AptError "$MISSING"
 	fi
+	echo >&2 "Done."
 }
 
 function AdjustSwap() {
