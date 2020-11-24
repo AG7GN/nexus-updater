@@ -768,7 +768,7 @@ then
 	echo "SRC_DIR=\"/usr/local/src/nexus\"" > $SCRIPT_VARS_FILE
 	echo "SHARE_DIR=\"/usr/local/share/nexus\"" >> $SCRIPT_VARS_FILE
 	export $(cat $SCRIPT_VARS_FILE)
-then
+fi
 
 APPS="$(echo "${1,,}" | tr ',' '\n' | sort -u | xargs)"
 
