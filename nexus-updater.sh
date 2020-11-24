@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.2
+#-    version         ${SCRIPT_NAME} 2.0.3
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -903,7 +903,7 @@ do
 			if (LocalRepoUpdate Xastir $XASTIR_GIT_URL) || [[ $FORCE == $TRUE ]]
 			then
 				echo "Building $APP from source"			
-				CheckDepInstalled "build-essential libmotif3 libmotif-dev libax25 libax25-dev graphicsmagick-libmagick-dev-compat libexif-dev libgraphics-magick-perl libgraphicsmagick++1 libgraphicsmagick++1-dev libgraphicsmagick1 libgraphicsmagick1-dev libwmf-dev x-dev gpsmanshp libshp-dev libshp1 shapelib tcl8.4 tcllib libcfitsio-dev libcfitsio2 libgeos2c2a libhdf4g libhdf4g-dev libltdl3 libltdl3-dev libnetcdf++3 libnetcdf3 libodbcinstq1c2 libpq-dev libpq4 libsqlite0 libsqlite0-dev libungif4-dev libxerces27 libxerces27-dev netcdfg-dev odbcinst1debian1 unixodbc unixodbc-dev proj libgsl0 libqgis0 qgis curl ibxp-dev x11proto-print-dev"
+				CheckDepInstalled "xorg-dev graphicsmagick gv libmotif-dev libcurl4-openssl-dev gpsman gpsmanshp libpcre3-dev libproj-dev libdb5.3-dev python-dev libwebp-dev shapelib libshp-dev festival festival-dev libgeotiff-dev libgraphicsmagick1-dev xfonts-100dpi xfonts-75dpi"
 				xset +fp /usr/share/fonts/X11/100dpi,/usr/share/fonts/X11/75dpi
             cd $SRC_DIR/Xastir
 	         ./bootstrap.sh
