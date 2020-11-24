@@ -189,7 +189,7 @@ function NexusLocalRepoUpdate() {
 		cd $SRC_DIR
    	if [[ -x ${2##*/}/nexus-install ]]
    	then
-   		${2##*/}/nexus-install
+   		${2##*/}/nexus-install || Die "Failed to install/update $1"
    	  	echo "======== $1 installed/updated ========"
 			cd $SRC_DIR
       	return $TRUE
@@ -1186,10 +1186,4 @@ EOF
          ;;
    esac
 done
-
-				
-
-	 
-
-
-
+SafeExit 0
