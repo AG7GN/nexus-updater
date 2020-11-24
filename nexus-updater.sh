@@ -75,10 +75,12 @@ function TrapCleanup() {
 
 
 function SafeExit() {
+  # Exit with arg1
+  EXIT_CODE=${1:-0}
   # Delete temp files, if any
   [[ -d "${TMPDIR}" ]] && rm -rf "${TMPDIR}/"
   trap - INT TERM EXIT
-  exit
+  exit $EXIT_CODE
 }
 
 
@@ -98,13 +100,13 @@ function ScriptInfo() {
 function Usage() { 
 	printf "Usage: "
 	ScriptInfo usage
-	exit
+	SafeExit 0
 }
 
 
 function Die () {
 	echo "${*}"
-	SafeExit
+	SafeExit 1
 }
 
 
@@ -116,7 +118,7 @@ function AptError () {
    echo
    echo
    echo
-   exit 1
+   SafeExit 1
 }
 
 
@@ -157,7 +159,7 @@ function LocalRepoUpdate() {
 	# See if local git repository exists. Create it ('git clone') if not
 	if ! [[ -s $SRC_DIR/$GIT_DIR/.git/HEAD ]]
 	then
-		git clone $URL || { echo >&2 "======= git clone $URL failed ========"; exit 1; }
+		git clone $URL || { echo >&2 "======= git clone $URL failed ========"; SafeExit 1; }
 	else  # See if local repo is up to date
 		cd $GIT_DIR
 		if git pull | tee /dev/stderr | grep -q "^Already"
@@ -254,7 +256,7 @@ function InstallPiardop() {
    	echo "=========== Installing piardop version $V ==========="
    	PIARDOP_BIN="${ARDOP[$V]##*/}"
    	echo "=========== Downloading ${ARDOP[$V]} ==========="
-   	wget -q -O $PIARDOP_BIN "${ARDOP[$V]}" || { echo >&2 "======= ${ARDOP[$V]} download failed with $? ========"; exit 1; }
+   	wget -q -O $PIARDOP_BIN "${ARDOP[$V]}" || { echo >&2 "======= ${ARDOP[$V]} download failed with $? ========"; SafeExit 1; }
    	chmod +x $PIARDOP_BIN
    	sudo mv $PIARDOP_BIN /usr/local/bin/
 #	    cat > $HOME/.asoundrc << EOF
@@ -279,7 +281,7 @@ function CheckInternet() {
       	 --text="<b>No Internet connection found.  Check your Internet connection \
 and run this script again.</b>" --buttons-layout=center \
 	       --button=Close:0
-   exit 1
+   SafeExit 1
 fi
 
 }
@@ -599,11 +601,11 @@ do
 	case "$OPTION" in
 		h) 
 			ScriptInfo full
-			exit 0
+			SafeExit 0
 			;;
 		v) 
 			ScriptInfo version
-			exit 0
+			SafeExit 0
 			;;
 		f)
 			FORCE=$TRUE
@@ -621,7 +623,7 @@ do
 				printf "%20s: %s\n" "${I}" "${DESC[$I]}"
 			done
 			echo >&2
-			exit 0
+			SafeExit 0
 			;;
 		:) 
 			Die "${SCRIPT_NAME}: -$OPTARG: option requires an argument"
@@ -662,12 +664,12 @@ then
 run <b>Raspberry > Hamradio > Nexus Updater</b> again." \
 		--buttons-layout=center \
 		--button=Close:0
-  		exit 0
+  		SafeExit 0
   	else
   		echo >&2
   		echo >&2 "A new version of this script has been installed. Please run it again."
   		echo >&2
-  		exit 0
+  		SafeExit 0
   	fi
 fi
 
@@ -736,18 +738,37 @@ then
 	if [ $RESULT -eq "1" ] || [[ $ANS == "" ]]
 	then 
    	echo "Update Cancelled"
-   	exit 0
+   	SafeExit 0
 	else
 		APP_LIST="$(echo "$ANS" | grep "^TRUE" | cut -d, -f2 | tr '\n' ',' | sed 's/,$//')"
 		if [ ! -z "$APP_LIST" ]
 		then
       	echo "Update/install list: $APP_LIST..."
-      	$0 $APP_LIST
+      	if $0 $APP_LIST
+      	then
+      		yad --center --title="$TITLE" --info --borders=30 \
+    				--no-wrap --text-align=center --text="<b>Finished.</b>\n\n" \
+    				--buttons-layout=center --button=Close:0
+    			SafeExit 0
+    		else  # Errors
+      		yad --center --title="$TITLE" --info --borders=30 \
+    				--no-wrap --text-align=center \
+    				--text="<b>FAILED.  Details in console.</b>\n\n" \
+    				--buttons-layout=center --button=Close:0
+		     	SafeExit 1
+    		fi
       fi
-     	exit 0
 	fi
 fi
+
 # If we get here, script was called with apps to install/update, so no GUI
+SCRIPT_VARS_FILE="/${TMPDIR}/env.vars"
+if [[ ! -s $SCRIPT_VARS_FILE ]]
+then
+	echo "SRC_DIR=\"/usr/local/src/nexus\"" > $SCRIPT_VARS_FILE
+	echo "SHARE_DIR=\"/usr/local/share/nexus\"" >> $SCRIPT_VARS_FILE
+	export $(cat $SCRIPT_VARS_FILE)
+then
 
 APPS="$(echo "${1,,}" | tr ',' '\n' | sort -u | xargs)"
 
@@ -798,7 +819,7 @@ do
       	then
       		AdjustSwap
       		cd $APP
-      		autoreconf -f -i || { echo >&2 "======= autoreconf -f -i failed ========"; exit 1; }
+      		autoreconf -f -i || { echo >&2 "======= autoreconf -f -i failed ========"; SafeExit 1; }
       		CONFIGURE="./configure"
       		if [[ $APP == "fldigi" ]]
       		then
@@ -831,7 +852,7 @@ do
                echo >&2 "========= $APP installation/update FAILED ========="
                cd $SRC_DIR
                AdjustSwap
-               exit 1
+               SafeExit 1
             fi
             AdjustSwap
          fi
@@ -888,7 +909,7 @@ EOF
          	else
             	echo "========= $APP installation FAILED ==========="
 	            cd $SRC_DIR
-	            exit 1
+	            SafeExit 1
          	fi
          fi
 			;;
@@ -920,7 +941,7 @@ EOF
                echo "========= $APP installation complete ==========="
             else
                echo >&2 "========= $APP installation FAILED ==========="
-               exit 1
+               SafeExit 1
             fi
 			fi
 			;;
@@ -937,9 +958,9 @@ EOF
          do
             APP_NAME="$(echo ${URL##*/} | cut -d'.' -f1)"
             ARIM_FILE="${URL##*/}"
-            wget -q -O $ARIM_FILE $URL || { echo >&2 "======= $URL download failed with $? ========"; exit 1; }
+            wget -q -O $ARIM_FILE $URL || { echo >&2 "======= $URL download failed with $? ========"; SafeExit 1; }
             TAR_FILE_URL="$(egrep 'https:.*arim.*[[:digit:]]+.tar.gz' $ARIM_FILE | grep -i 'current' | cut -d'"' -f2)"
-            [[ $TAR_FILE_URL == "" ]] && { echo >&2 "======= Download failed.  Could not find tar file URL ========"; exit 1; }
+            [[ $TAR_FILE_URL == "" ]] && { echo >&2 "======= Download failed.  Could not find tar file URL ========"; SafeExit 1; }
             rm -f $ARIM_FILE
             TAR_FILE="${TAR_FILE_URL##*/}"
             FNAME="$(echo $TAR_FILE | sed 's/.tar.gz//')"
@@ -949,7 +970,7 @@ EOF
             then
      	         command -v piardopc >/dev/null || InstallPiardop
                echo "======== Downloading $TAR_FILE_URL ==========="
-               wget -q -O $TAR_FILE $TAR_FILE_URL || { echo >&2 "======= $TAR_FILE_URL download failed with $? ========"; exit 1; }
+               wget -q -O $TAR_FILE $TAR_FILE_URL || { echo >&2 "======= $TAR_FILE_URL download failed with $? ========"; SafeExit 1; }
                if [[ $APP_NAME == "arim" ]]
 					then
 						CheckDepInstalled "libncurses5-dev libncursesw5-dev"
@@ -969,7 +990,7 @@ EOF
                else
                   echo >&2 "===========  $APP_NAME installation FAILED ========="
                   cd $SRC_DIR
-                  exit 1
+                  SafeExit 1
                fi
             else
                echo "============= $APP_NAME is at latest version $LATEST_VERSION ================"
@@ -981,7 +1002,7 @@ EOF
       pat)
          echo "============= $APP installation requested ============="
          PAT_REL_URL="$(wget -qO - $PAT_GIT_URL | grep -m1 _linux_armhf.deb | grep -Eoi '<a [^>]+>' | grep -Eo 'href="[^\"]+"' | cut -d'"' -f2)"
-  	      [[ $PAT_REL_URL == "" ]] && { echo >&2 "======= $PAT_GIT_URL download failed with $? ========"; exit 1; }
+  	      [[ $PAT_REL_URL == "" ]] && { echo >&2 "======= $PAT_GIT_URL download failed with $? ========"; SafeExit 1; }
         	PAT_URL="${PAT_REL_URL}"
         	PAT_FILE="${PAT_URL##*/}"
         	INSTALLED_VERSION="$(InstalledPkgVersion pat)"
@@ -995,9 +1016,9 @@ EOF
 			# Install or update needed. Get and install the package
 			mkdir -p $APP
 			rm -f $APP/*
-			wget -q -O $APP/$PAT_FILE $PAT_URL || { echo >&2 "======= $PAT_URL download failed with $? ========"; exit 1; }
-         [ -s "$APP/$PAT_FILE" ] || { echo >&2 "======= $PAT_FILE is empty ========"; exit 1; }
-         sudo dpkg -i $APP/$PAT_FILE || { echo >&2 "======= pat installation failed with $? ========"; exit 1; }
+			wget -q -O $APP/$PAT_FILE $PAT_URL || { echo >&2 "======= $PAT_URL download failed with $? ========"; SafeExit 1; }
+         [ -s "$APP/$PAT_FILE" ] || { echo >&2 "======= $PAT_FILE is empty ========"; SafeExit 1; }
+         sudo dpkg -i $APP/$PAT_FILE || { echo >&2 "======= pat installation failed with $? ========"; SafeExit 1; }
          echo "============= $APP installed/updated ============="
 			;;
 
@@ -1032,7 +1053,7 @@ EOF
       		INSTALLED_VERSION="$($(command -v chirpw) --version | cut -d' ' -f 2)"
    		fi      
          CHIRP_TAR_FILE="$(wget -qO - $CHIRP_URL | grep "\.tar.gz" | grep -Eoi '<a [^>]+>' | grep -Eo 'href="[^\"]+"' | cut -d'"' -f2)"
-         [[ $CHIRP_TAR_FILE == "" ]] && { echo >&2 "======= $CHIRP_URL download failed with $? ========"; exit 1; }
+         [[ $CHIRP_TAR_FILE == "" ]] && { echo >&2 "======= $CHIRP_URL download failed with $? ========"; SafeExit 1; }
 			LATEST_VERSION="$(echo $CHIRP_TAR_FILE | sed 's/^chirp-//;s/.tar.gz//')"
         	echo >&2 "Latest version: $LATEST_VERSION   Installed version: $INSTALLED_VERSION"
          if [[ $INSTALLED_VERSION == $LATEST_VERSION && $FORCE == $FALSE ]]
@@ -1042,8 +1063,8 @@ EOF
 			fi
         	CHIRP_URL="${CHIRP_URL}/${CHIRP_TAR_FILE}"
         	echo "============= Downloading $CHIRP_URL ============="
-        	wget -q -O $CHIRP_TAR_FILE $CHIRP_URL || { echo >&2 "======= $CHIRP_URL download failed with $? ========"; exit 1; }
-        	[ -s "$CHIRP_TAR_FILE" ] || { echo >&2 "======= $CHIRP_TAR_FILE is empty ========"; exit 1; }
+        	wget -q -O $CHIRP_TAR_FILE $CHIRP_URL || { echo >&2 "======= $CHIRP_URL download failed with $? ========"; SafeExit 1; }
+        	[ -s "$CHIRP_TAR_FILE" ] || { echo >&2 "======= $CHIRP_TAR_FILE is empty ========"; SafeExit 1; }
         	CheckDepInstalled "python-gtk2 python-serial python-libxml2 python-future"
         	tar xzf $CHIRP_TAR_FILE
         	CHIRP_DIR="$(echo $CHIRP_TAR_FILE | sed 's/.tar.gz//')"
@@ -1084,7 +1105,7 @@ EOF
       	[[ $APP == "wsjtx" ]] && URL="$WSJTX_URL" || URL="$JS8CALL_URL"
          echo "======== $APP install/upgrade was requested ========="
 			PKG="$(wget -O - -q "$URL" | grep -m1 armhf.deb | cut -d'"' -f2)"
-        	[[ $PKG =~ "armhf.deb" ]] || { echo >&2 "======= Failed to retrieve wsjtx from $WSJTX_URL ========"; exit 1; }
+        	[[ $PKG =~ "armhf.deb" ]] || { echo >&2 "======= Failed to retrieve wsjtx from $WSJTX_URL ========"; SafeExit 1; }
         	INSTALLED_VERSION="$(InstalledPkgVersion $APP)"
         	LATEST_VERSION="$(echo ${PKG##*/} | cut -d '_' -f2)"
         	echo >&2 "Latest version: $LATEST_VERSION   Installed version: $INSTALLED_VERSION"
@@ -1097,11 +1118,11 @@ EOF
          echo >&2 "=========== Retrieving $APP from $URL ==========="
          mkdir -p $APP
          cd $APP
-			wget -q $URL || { echo >&2 "======= $URL download failed with $? ========"; exit 1; }
+			wget -q $URL || { echo >&2 "======= $URL download failed with $? ========"; SafeExit 1; }
          echo >&2 "=========== Installing $APP ==========="
          CheckDepInstalled "libgfortran3 libqt5multimedia5-plugins libqt5serialport5 libqt5sql5-sqlite libfftw3-single3"    
 			[[ ! -z $INSTALLED_VERSION ]] && (sudo apt remove -y $APP || AptError "sudo apt remove -y $APP")
-         sudo dpkg -i ${PKG##*/} || { echo >&2 "======= ${PKG##*/} install failed with $? ========"; exit 1; }
+         sudo dpkg -i ${PKG##*/} || { echo >&2 "======= ${PKG##*/} install failed with $? ========"; SafeExit 1; }
          sudo sed -i 's/AudioVideo;Audio;//' /usr/share/applications/$APP.desktop /usr/share/applications/message_aggregator.desktop 2>/dev/null
          lxpanelctl restart
          rm -f ${PKG##*/}
@@ -1112,7 +1133,7 @@ EOF
      		mkdir -p linbpq
      		cd linbpq
          echo >&2 "============= LinBPQ install/update requested ============"
-         wget -q -O pilinbpq $LINBPQ_URL || { echo >&2 "======= $LINBPQ_URL download failed with $? ========"; exit 1; }
+         wget -q -O pilinbpq $LINBPQ_URL || { echo >&2 "======= $LINBPQ_URL download failed with $? ========"; SafeExit 1; }
 			chmod +x pilinbpq
 			# LinBPQ documentation recommends installing app and config in $HOME
      	   if [[ -x $HOME/linbpq/linbpq ]]
@@ -1133,8 +1154,8 @@ EOF
 			mkdir -p $HOME/linbpq/HTML
 			mv -f pilinbpq $HOME/linbpq/linbpq
 			DOC="${LINBPQ_DOC##*/}"
-			wget -q -O $DOC $LINBPQ_DOC || { echo >&2 "======= $LINBPQ_DOC download failed with $? ========"; exit 1; }
-			unzip -o -d $HOME/linbpq/HTML $DOC || { echo >&2 "======= Failed to unzip $DOC ========"; exit 1; }
+			wget -q -O $DOC $LINBPQ_DOC || { echo >&2 "======= $LINBPQ_DOC download failed with $? ========"; SafeExit 1; }
+			unzip -o -d $HOME/linbpq/HTML $DOC || { echo >&2 "======= Failed to unzip $DOC ========"; SafeExit 1; }
 			rm -f $DOC
 			sudo setcap "CAP_NET_ADMIN=ep CAP_NET_RAW=ep CAP_NET_BIND_SERVICE=ep" $HOME/linbpq/linbpq
      		echo >&2 "============= LinBPQ installed/updated ================="
