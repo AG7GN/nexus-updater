@@ -513,8 +513,8 @@ LINBPQ_URL="http://www.cantab.net/users/john.wiseman/Downloads/Beta/pilinbpq"
 LINBPQ_DOC="http://www.cantab.net/users/john.wiseman/Downloads/Beta/HTMLPages.zip"
 LINPAC_GIT_URL="https://git.code.sf.net/p/linpac/linpac"
 REBOOT="NO"
-SRC_DIR="/usr/local/src/nexus"
-SHARE_DIR="/usr/local/share/nexus"
+#SRC_DIR="/usr/local/src/nexus"
+#SHARE_DIR="/usr/local/share/nexus"
 TITLE="Nexus Updater - version $VERSION"
 
 declare -r TRUE=0
@@ -660,6 +660,15 @@ $SYNTAX && set -n
 # Run in debug mode, if set
 $DEBUG && set -x 
 
+if [[ -z $SRC_DIR ]]
+then
+	SCRIPT_VARS_FILE="/${TMPDIR}/env.vars"
+	echo "SRC_DIR=/usr/local/src/nexus" > $SCRIPT_VARS_FILE
+	echo "SHARE_DIR=/usr/local/share/nexus" >> $SCRIPT_VARS_FILE
+	export $(cat $SCRIPT_VARS_FILE)
+	#echo "SRC_DIR and SHARE_DIR exported."
+fi
+
 (( $# == 0 )) && GUI=$TRUE || GUI=$FALSE
 
 CheckInternet
@@ -770,15 +779,8 @@ then
       fi
 	fi
 fi
-
 # If we get here, script was called with apps to install/update, so no GUI
-if [[ -z $SRC_DIR ]]
-then
-	SCRIPT_VARS_FILE="/${TMPDIR}/env.vars"
-	echo "SRC_DIR=/usr/local/src/nexus" > $SCRIPT_VARS_FILE
-	echo "SHARE_DIR=/usr/local/share/nexus" >> $SCRIPT_VARS_FILE
-	export $(cat $SCRIPT_VARS_FILE)
-fi
+
 
 APPS="$(echo "${1,,}" | tr ',' '\n' | sort -u | xargs)"
 
