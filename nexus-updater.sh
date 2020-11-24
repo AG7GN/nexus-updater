@@ -399,7 +399,7 @@ function CheckDepInstalled() {
 	MISSING=$(dpkg-query -W -f='${Package} ${Status}\n' $1 2>&1 | grep 'not-installed$' | awk '{ print $1 }')
 	if [[ ! -z $MISSING ]]
 	then
-		sudo apt -y install $MISSING || AptError "$MISSING"
+		sudo apt-get -y install $MISSING || AptError "$MISSING"
 	fi
 }
 
