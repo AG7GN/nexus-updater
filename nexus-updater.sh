@@ -393,7 +393,8 @@ function CheckDepInstalled() {
 	# Checks the installation status of a list of packages. Installs them if they are not
 	# installed.
 	# Takes 1 argument: a string containing the apps to check with apps separated by space
-	MISSING=$(dpkg --get-selections $1 2>&1 | grep -v 'install$' | awk '{ print $6 }')
+	#MISSING=$(dpkg --get-selections $1 2>&1 | grep -v 'install$' | awk '{ print $6 }')
+	MISSING=$(dpkg-query -W -f='${Package} ${Status}\n' $1 2>&1 | grep 'not-installed$' | awk '{ print $1 }')
 	if [[ ! -z $MISSING ]]
 	then
 		sudo apt -y install $MISSING || AptError "$MISSING"
@@ -1072,11 +1073,13 @@ EOF
 			fi
 			NexusLocalRepoUpdate pmon $PMON_GIT_URL
      		;;
+
      	nexus-rmsgw)
      		CheckDepInstalled "xutils-dev libxml2 libxml2-dev libncurses5-dev python-requests"
      		echo "Depencies Checked for nexus-rmsgw"
      		NexusLocalRepoUpdate nexus-rmsgw $NEXUS_RMSGW_GIT_URL
      		;;
+
       wsjtx|js8call)
       	[[ $APP == "wsjtx" ]] && URL="$WSJTX_URL" || URL="$JS8CALL_URL"
          echo "======== $APP install/upgrade was requested ========="
