@@ -202,6 +202,17 @@ function NexusLocalRepoUpdate() {
 }
 
 
+function CandidatePkgVersion() {
+
+	# Checks the candidate version of a package
+	# arg1: Name of package
+	# Returns candidate version of package or empty string if package not found
+	
+	CANDIDATE_="$(apt-cache policy "$1" | grep "Candidate:" | tr -d ' ' | cut -d: -f2)"
+	[[ -z $CANDIDATE_ ]] && echo "" || echo "$CANDIDATE_"
+	
+}
+
 function InstalledPkgVersion() {
 
 	# Checks if a deb package is installed and returns version if it is
@@ -978,6 +989,7 @@ EOF
             FNAME="$(echo $TAR_FILE | sed 's/.tar.gz//')"
             LATEST_VERSION="$(echo $FNAME | cut -d'-' -f2)"
             INSTALLED_VERSION="$($APP_NAME -v 2>/dev/null | grep -i "^$APP_NAME" | cut -d' ' -f2)"
+	        	echo >&2 "Latest version: $LATEST_VERSION   Installed version: $INSTALLED_VERSION"
             if [[ $LATEST_VERSION != $INSTALLED_VERSION ]]
             then
      	         command -v piardopc >/dev/null || InstallPiardop
@@ -1008,7 +1020,6 @@ EOF
                echo "============= $APP_NAME is at latest version $LATEST_VERSION ================"
             fi
          done
-         cd $SRC_DIR
 			;;
 
       pat)
@@ -1091,18 +1102,27 @@ EOF
 
       pmon)
          echo "============= pmon installation requested ============"
-        	if grep -q scs-pts /etc/apt/sources.list.d/scs.list 2>/dev/null
-        	then
-            sudo apt install pmon || AptError "sudo apt install pmon"
-        	else
-           	echo "deb $PMON_REPO buster non-free" | sudo tee /etc/apt/sources.list.d/scs.list > /dev/null
-           	wget -q -O - ${PMON_REPO}scs.gpg.key | sudo apt-key add -
-           	#sudo apt update
-           	sudo apt install pmon || AptError "sudo apt install pmon"
+        	INSTALLED_VERSION="$(InstalledPkgVersion $APP)"
+        	if [[ -z $INSTALLED_VERSION ]]
+        	then  # pmon not installed
+        		if grep -q scs-pts /etc/apt/sources.list.d/scs.list 2>/dev/null
+        		then
+            	sudo apt -y install pmon || AptError "sudo apt install pmon"
+        		else
+           		echo "deb $PMON_REPO buster non-free" | sudo tee /etc/apt/sources.list.d/scs.list > /dev/null
+           		wget -q -O - ${PMON_REPO}scs.gpg.key | sudo apt-key add -
+           		sudo apt -y install pmon || AptError "sudo apt install pmon"
+				fi
+        	else  # pmon already installed. Is there an update?
+        		CANDIDATE_VERSION="$(CandidatePkgVersion $APP)"
+        		if [[ $INSTALLED_VERSION != $CANDIDATE_VERSION ]]
+        		then
+           		sudo apt -y install pmon || AptError "sudo apt install pmon"
+				fi
         	fi
         	if [[ $FORCE == $TRUE ]]
 			then
-				sudo apt install --reinstall pmon || AptError "sudo apt install pmon"
+				sudo apt -y install --reinstall pmon || AptError "sudo apt install pmon"
 			fi
 			NexusLocalRepoUpdate pmon $PMON_GIT_URL
      		;;
@@ -1142,7 +1162,8 @@ EOF
 			;;
 
      	linbpq)
-     		mkdir -p linbpq
+     		INSTALL_PMON=$FALSE
+     	   mkdir -p linbpq
      		cd linbpq
          echo >&2 "============= LinBPQ install/update requested ============"
          wget -q -O pilinbpq $LINBPQ_URL || { echo >&2 "======= $LINBPQ_URL download failed with $? ========"; SafeExit 1; }
@@ -1159,19 +1180,23 @@ EOF
 					continue
 				else # New version
 					echo "============= Installing newer version of $APP ============="
+					INSTALL_PMON=$TRUE
 				fi
 			else # No linbpq installed
 				echo "============= Installing LinBPQ ============"
-			fi		
-			mkdir -p $HOME/linbpq/HTML
-			mv -f pilinbpq $HOME/linbpq/linbpq
-			DOC="${LINBPQ_DOC##*/}"
-			wget -q -O $DOC $LINBPQ_DOC || { echo >&2 "======= $LINBPQ_DOC download failed with $? ========"; SafeExit 1; }
-			unzip -o -d $HOME/linbpq/HTML $DOC || { echo >&2 "======= Failed to unzip $DOC ========"; SafeExit 1; }
-			rm -f $DOC
-			sudo setcap "CAP_NET_ADMIN=ep CAP_NET_RAW=ep CAP_NET_BIND_SERVICE=ep" $HOME/linbpq/linbpq
+				INSTALL_PMON=$TRUE
+			fi
+			if [[ $INSTALL_PMON == $TRUE ]]
+			then	
+				mkdir -p $HOME/linbpq/HTML
+				mv -f pilinbpq $HOME/linbpq/linbpq
+				DOC="${LINBPQ_DOC##*/}"
+				wget -q -O $DOC $LINBPQ_DOC || { echo >&2 "======= $LINBPQ_DOC download failed with $? ========"; SafeExit 1; }
+				unzip -o -d $HOME/linbpq/HTML $DOC || { echo >&2 "======= Failed to unzip $DOC ========"; SafeExit 1; }
+				rm -f $DOC
+				sudo setcap "CAP_NET_ADMIN=ep CAP_NET_RAW=ep CAP_NET_BIND_SERVICE=ep" $HOME/linbpq/linbpq
+			fi
      		echo >&2 "============= LinBPQ installed/updated ================="
-			cd $SRC_DIR
 			;;
 
 		linpac)
