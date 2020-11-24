@@ -852,8 +852,7 @@ do
             sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list
             sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list.d/raspi.list
 			   #sudo apt update || AptError "sudo apt update"
-            CheckDepInstalled "libasound2 libc6 libfltk-images1.3 libfltk1.3 libflxmlrpc1 libgcc1 libpng16-16 libportaudio2 libpulse0 libsamplerate0 libsamplerate0-dev libsndfile1 libstdc++6 libx11-6 zlib1g synaptic pavucontrol libusb-1.0-0-dev libusb-1.0-doc"
-            InstallHamlib
+            CheckDepInstalled "asciidoc asciidoc-base asciidoc-common autopoint debhelper dh-autoreconf dh-strip-nondeterminism docbook-xsl dwz gettext intltool-debian libarchive-zip-perl libasound2 libblkid-dev libc6 libffi-dev libfile-stripnondeterminism-perl libflac-dev libfltk1.3 libfltk-images1.3 libflxmlrpc1 libflxmlrpc-dev libgcc1 libglib2.0-dev libglib2.0-dev-bin libjack-jackd2-0 libjack-jackd2-dev libmount-dev libogg-dev libpng16-16 libportaudio2 libportaudiocpp0 libpulse0 libpulse-dev libsamplerate0 libsamplerate0-dev libselinux1-dev libsepol1-dev libsndfile1 libsndfile1-dev libstdc++6 libusb-1.0-0-dev libusb-1.0-doc libvorbis-dev libx11-6 libxml2-utils pavucontrol po-debconf portaudio19-dev synaptic xsltproc zlib1g"
             FLDIGI_DEPS_INSTALLED=$TRUE
          fi
       	if (LocalRepoUpdate $APP $FLROOT_GIT_URL/$APP) || [[ $FORCE == $TRUE ]]
@@ -864,6 +863,7 @@ do
       		CONFIGURE="./configure"
       		if [[ $APP == "fldigi" ]]
       		then
+	            InstallHamlib
       			PI_MODEL=$(PiModel)
       			[[ ! -z $PI_MODEL ]] && CONFIGURE="./configure --enable-optimizations=$PI_MODEL"
       		fi
