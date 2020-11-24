@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.3
+#-    version         ${SCRIPT_NAME} 2.0.4
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -1119,6 +1119,7 @@ EOF
         		else
            		echo "deb $PMON_REPO buster non-free" | sudo tee /etc/apt/sources.list.d/scs.list > /dev/null
            		wget -q -O - ${PMON_REPO}scs.gpg.key | sudo apt-key add -
+           		sudo apt update
            		sudo apt -y install pmon || AptError "sudo apt install pmon"
 				fi
         	else  # pmon already installed. Is there an update?
