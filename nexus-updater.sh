@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.4
+#-    version         ${SCRIPT_NAME} 2.0.6
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -474,6 +474,7 @@ function Help () {
 	APPS[js8call]="http://js8call.com"
 	APPS[linbpq]="http://www.cantab.net/users/john.wiseman/Documents/InstallingLINBPQ.html"
 	APPS[linpac]="https://sourceforge.net/projects/linpac/"
+	APPS[hamlib]="https://github.com/Hamlib/Hamlib"
 	APP="$2"
 	$BROWSER ${APPS[$APP]} 2>/dev/null &
 }
@@ -558,6 +559,7 @@ DESC[fldigi]="Fast Light DIGItal Modem"
 DESC[flmsg]="Forms Manager for Fldigi"
 DESC[flrig]="Rig Control for Fldigi"
 DESC[flwrap]="File Encapsulation for Fldigi"
+DESC[hamlib]="API for controlling radios (rigctl)"
 DESC[nexus-backup-restore]="Backup/Restore Home Folder"
 DESC[nexus-iptables]="Firewall Rules for Nexus Image"
 DESC[nexus-rmsgw]="RMS Gateway software for the Nexus Image"
