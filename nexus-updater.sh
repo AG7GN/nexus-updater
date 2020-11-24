@@ -852,7 +852,7 @@ do
             sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list
             sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list.d/raspi.list
 			   #sudo apt update || AptError "sudo apt update"
-            CheckDepInstalled "libasound2 libc6 libfltk-images1.3 libfltk1.3 libflxmlrpc1 libgcc1 libpng16-16 libportaudio2 libpulse0 libsamplerate0 libsndfile1 libstdc++6 libx11-6 zlib1g synaptic pavucontrol libusb-1.0-0-dev libusb-1.0-doc"
+            CheckDepInstalled "libasound2 libc6 libfltk-images1.3 libfltk1.3 libflxmlrpc1 libgcc1 libpng16-16 libportaudio2 libpulse0 libsamplerate0 libsamplerate0-dev libsndfile1 libstdc++6 libx11-6 zlib1g synaptic pavucontrol libusb-1.0-0-dev libusb-1.0-doc"
             InstallHamlib
             FLDIGI_DEPS_INSTALLED=$TRUE
          fi
