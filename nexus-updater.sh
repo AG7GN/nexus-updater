@@ -242,6 +242,7 @@ function InstallHamlib () {
 		then  # Hamlib installed via apt. Remove it.
 			sudo apt -y remove --purge libhamlib2 libhamlib-dev libhamlib-utils*
 			sudo apt-mark hold libhamlib2
+			#sudo apt-mark hold libhamlib-dev
 			echo
 			echo
 			echo
@@ -260,7 +261,7 @@ function InstallHamlib () {
 		autoreconf -f -i
 		./configure && make && sudo make install
 		sudo ldconfig
-		cd $SRC_DIR
+		cd -
 	fi
 	#sudo apt -y install libhamlib2 libhamlib-dev libhamlib-utils*
 	#return $?
@@ -445,7 +446,7 @@ function CheckDepInstalled() {
 function AdjustSwap() {
 	CURRENT_SWAP="$(grep "^CONF_SWAPSIZE" $SWAP_FILE)"
 	[[ -z $CURRENT_SWAP ]] && return
-	NEW_SWAP="CONF_SWAPSIZE=1024"
+	NEW_SWAP="CONF_SWAPSIZE=2048"
 	if [[ $CURRENT_SWAP == $SWAP ]]
 	then  # Use larger swap
 		echo >&2 "Setting larger swap size"
