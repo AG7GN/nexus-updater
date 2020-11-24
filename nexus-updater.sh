@@ -330,6 +330,14 @@ function GenerateList () {
 					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
 				fi
 				;;
+			hamlib)
+				if command -v rigctl 1>/dev/null 2>&1
+				then
+					echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE" 
+				else
+					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
+				fi
+				;;
 			nexus-utilities)
 				if [ -s /usr/local/src/nexus/nexus-utilities.version ]
 				then
