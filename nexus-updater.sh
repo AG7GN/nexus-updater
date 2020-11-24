@@ -214,6 +214,16 @@ function InstalledPkgVersion() {
 }
 
 
+function DebPkgVersion() {
+	# Checks the version of a .deb package file.
+	# Returns version of the .deb package or empty string if .deb file can't be read
+	# arg1: path to .deb file
+	VERSION_="$(dpkg-deb -I "$1" 2>/dev/null | grep "^ Version:" | tr -d ' ' | cut -d: -f2)"
+	[[ -z $VERSION_ ]] && echo "" || echo "$VERSION_"
+
+}
+
+
 function InstallHamlib () {
 	if command -v rigctl >/dev/null 2>&1
 	then  # Hamlib installed
@@ -762,10 +772,13 @@ then
 fi
 
 # If we get here, script was called with apps to install/update, so no GUI
-SCRIPT_VARS_FILE="/${TMPDIR}/env.vars"
-echo "SRC_DIR=/usr/local/src/nexus" > $SCRIPT_VARS_FILE
-echo "SHARE_DIR=/usr/local/share/nexus" >> $SCRIPT_VARS_FILE
-export $(cat $SCRIPT_VARS_FILE)
+if [[ -z $SRC_DIR ]]
+then
+	SCRIPT_VARS_FILE="/${TMPDIR}/env.vars"
+	echo "SRC_DIR=/usr/local/src/nexus" > $SCRIPT_VARS_FILE
+	echo "SHARE_DIR=/usr/local/share/nexus" >> $SCRIPT_VARS_FILE
+	export $(cat $SCRIPT_VARS_FILE)
+fi
 
 APPS="$(echo "${1,,}" | tr ',' '\n' | sort -u | xargs)"
 
