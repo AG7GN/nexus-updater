@@ -77,6 +77,7 @@ function TrapCleanup() {
 function SafeExit() {
   # Exit with arg1
   EXIT_CODE=${1:-0}
+  AdjustSwap  # Restore swap if needed
   # Delete temp files, if any
   [[ -d "${TMPDIR}" ]] && rm -rf "${TMPDIR}/"
   trap - INT TERM EXIT
@@ -208,7 +209,7 @@ function CandidatePkgVersion() {
 	# arg1: Name of package
 	# Returns candidate version of package or empty string if package not found
 	
-	CANDIDATE_="$(apt-cache policy "$1" | grep "Candidate:" | tr -d ' ' | cut -d: -f2)"
+	CANDIDATE_="$(apt-cache --no-generate policy "$1" 2>/dev/null | grep "Candidate:" | tr -d ' ' | cut -d: -f2)"
 	[[ -z $CANDIDATE_ ]] && echo "" || echo "$CANDIDATE_"
 	
 }
@@ -288,6 +289,23 @@ function InstallHamlib () {
 	fi
 	#sudo apt -y install libhamlib2 libhamlib-dev libhamlib-utils*
 	#return $?
+}
+
+
+function AdjustSwap() {
+
+	# Adjusts swap space. Takes 1 optional argument: the new swap size in Mbytes.
+	# If no argument is supplied, swap space is reset to what it was when this ScriptInfo
+	# started. That start value is stored in $SWAP, a global variable set at script start.
+	
+	[[ $SWAP =~ ^[0-9]+$ ]] || SWAP=100  # Handle case where SWAP has nonsensical value
+	CURRENT_SWAP="$(grep "^CONF_SWAPSIZE" $SWAP_FILE | cut -d= -f2)"
+	NEW_SWAP="${1:-$SWAP}"
+	if [[ $NEW_SWAP != $CURRENT_SWAP ]]
+	then
+		sudo sed -i -e "s/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=$NEW_SWAP/" $SWAP_FILE
+		sudo systemctl restart dphys-swapfile
+	fi
 }
 
 
@@ -444,22 +462,6 @@ This Pi must be connected to the Internet for this script to work.\n\n \
 }
 
 
-function AdjustSwap() {
-	CURRENT_SWAP="$(grep "^CONF_SWAPSIZE" $SWAP_FILE)"
-	[[ -z $CURRENT_SWAP ]] && return
-	NEW_SWAP="CONF_SWAPSIZE=2048"
-	if [[ $CURRENT_SWAP == $SWAP ]]
-	then  # Use larger swap
-		echo >&2 "Setting larger swap size"
-		sudo sed -i -e "s/^CONF_SWAPSIZE=.*/$NEW_SWAP/" $SWAP_FILE
-	else # Restore swap
-		echo >&2 "Restoring original swap size"
-		sudo sed -i -e "s/^CONF_SWAPSIZE=.*/$SWAP/" $SWAP_FILE
-	fi
-	sudo systemctl restart dphys-swapfile
-}
-
-
 function Help () {
 	BROWSER="$(command -v chromium-browser)"
 	declare -A APPS
@@ -556,7 +558,7 @@ GUI=$FALSE
 FORCE=$FALSE
 FLDIGI_DEPS_INSTALLED=$FALSE
 SWAP_FILE="/etc/dphys-swapfile"
-SWAP="$(grep "^CONF_SWAPSIZE" $SWAP_FILE)"
+SWAP="$(grep "^CONF_SWAPSIZE" $SWAP_FILE | cut -d= -f2)"
 
 LIST="raspbian 710 arim autohotspot chirp direwolf flamp fldigi flmsg flrig flwrap hamlib js8call linbpq linpac nexus-backup-restore nexus-iptables nexus-rmsgw nexus-updater nexus-utilities pat piardop pmon wsjtx xastir"
 declare -A DESC
@@ -829,6 +831,7 @@ then
 #	echo >&2 "apt cache less than an hour old"
 fi
 
+
 CheckDepInstalled "extra-xdg-menus bc dnsutils libgtk-3-bin jq moreutils exfat-utils build-essential autoconf automake libtool checkinstall git"
 
 for APP in $APPS
@@ -850,18 +853,18 @@ do
    		;;
 
       fldigi|flamp|flmsg|flrig|flwrap)
-         if [[ $FLDIGI_DEPS_INSTALLED == $FALSE ]]
-         then
-            echo "========= $APP install/update requested  =========="
-            sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list
-            sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list.d/raspi.list
-			   #sudo apt update || AptError "sudo apt update"
-            InstallHamlib
-            CheckDepInstalled "asciidoc asciidoc-base asciidoc-common autopoint debhelper dh-autoreconf dh-strip-nondeterminism docbook-xsl dwz gettext intltool-debian libarchive-zip-perl libasound2 libblkid-dev libc6 libffi-dev libfile-stripnondeterminism-perl libflac-dev libfltk1.3 libfltk-images1.3 libflxmlrpc1 libflxmlrpc-dev libgcc1 libglib2.0-dev libglib2.0-dev-bin libjack-jackd2-0 libjack-jackd2-dev libmount-dev libogg-dev libpng16-16 libportaudio2 libportaudiocpp0 libpulse0 libpulse-dev libsamplerate0 libsamplerate0-dev libselinux1-dev libsepol1-dev libsndfile1 libsndfile1-dev libstdc++6 libusb-1.0-0-dev libusb-1.0-doc libvorbis-dev libx11-6 libxft-dev libxml2-utils pavucontrol po-debconf portaudio19-dev synaptic xsltproc zlib1g"
-            FLDIGI_DEPS_INSTALLED=$TRUE
-         fi
       	if (LocalRepoUpdate $APP $FLROOT_GIT_URL/$APP) || [[ $FORCE == $TRUE ]]
       	then
+				if [[ $FLDIGI_DEPS_INSTALLED == $FALSE ]]
+				then
+					echo "========= $APP install/update requested  =========="
+					sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list
+					sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list.d/raspi.list
+					#sudo apt update || AptError "sudo apt update"
+					InstallHamlib
+					CheckDepInstalled "asciidoc asciidoc-base asciidoc-common autopoint debhelper dh-autoreconf dh-strip-nondeterminism docbook-xsl dwz gettext intltool-debian libarchive-zip-perl libasound2 libblkid-dev libc6 libffi-dev libfile-stripnondeterminism-perl libflac-dev libfltk1.3 libfltk-images1.3 libflxmlrpc1 libflxmlrpc-dev libgcc1 libglib2.0-dev libglib2.0-dev-bin libjack-jackd2-0 libjack-jackd2-dev libmount-dev libogg-dev libpng16-16 libportaudio2 libportaudiocpp0 libpulse0 libpulse-dev libsamplerate0 libsamplerate0-dev libselinux1-dev libsepol1-dev libsndfile1 libsndfile1-dev libstdc++6 libusb-1.0-0-dev libusb-1.0-doc libvorbis-dev libx11-6 libxft-dev libxml2-utils pavucontrol po-debconf portaudio19-dev synaptic xsltproc zlib1g"
+					FLDIGI_DEPS_INSTALLED=$TRUE
+				fi
       		AdjustSwap
       		cd $APP
       		autoreconf -f -i || { echo >&2 "======= autoreconf -f -i failed ========"; SafeExit 1; }
