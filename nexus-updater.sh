@@ -865,7 +865,7 @@ do
 					CheckDepInstalled "asciidoc asciidoc-base asciidoc-common autopoint debhelper dh-autoreconf dh-strip-nondeterminism docbook-xsl dwz gettext intltool-debian libarchive-zip-perl libasound2 libblkid-dev libc6 libffi-dev libfile-stripnondeterminism-perl libflac-dev libfltk1.3 libfltk-images1.3 libflxmlrpc1 libflxmlrpc-dev libgcc1 libglib2.0-dev libglib2.0-dev-bin libjack-jackd2-0 libjack-jackd2-dev libmount-dev libogg-dev libpng16-16 libportaudio2 libportaudiocpp0 libpulse0 libpulse-dev libsamplerate0 libsamplerate0-dev libselinux1-dev libsepol1-dev libsndfile1 libsndfile1-dev libstdc++6 libusb-1.0-0-dev libusb-1.0-doc libvorbis-dev libx11-6 libxft-dev libxml2-utils pavucontrol po-debconf portaudio19-dev synaptic xsltproc zlib1g"
 					FLDIGI_DEPS_INSTALLED=$TRUE
 				fi
-      		AdjustSwap
+      		AdjustSwap 2048
       		cd $APP
       		autoreconf -f -i || { echo >&2 "======= autoreconf -f -i failed ========"; SafeExit 1; }
       		CONFIGURE="./configure"
@@ -899,7 +899,6 @@ do
             else
                echo >&2 "========= $APP installation/update FAILED ========="
                cd $SRC_DIR
-               AdjustSwap
                SafeExit 1
             fi
             AdjustSwap
