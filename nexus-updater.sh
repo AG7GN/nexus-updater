@@ -235,6 +235,29 @@ function DebPkgVersion() {
 }
 
 
+function CheckDepInstalled() {
+	# Checks the installation status of a list of packages. Installs them if they are not
+	# installed.
+	# Takes 1 argument: a string containing the apps to check with apps separated by space
+	#MISSING=$(dpkg --get-selections $1 2>&1 | grep -v 'install$' | awk '{ print $6 }')
+	#MISSING=$(dpkg-query -W -f='${Package} ${Status}\n' $1 2>&1 | grep 'not-installed$' | awk '{ print $1 }')
+	echo >&2 "Checking dependencies..."
+	MISSING=""
+   for P in $1
+   do
+      if apt-cache --no-generate policy $P 2>/dev/null | grep -q "Installed: (none)"
+      then
+         MISSING+="$P "
+      fi
+   done
+	if [[ ! -z $MISSING ]]
+	then
+		sudo apt-get -y install $MISSING || AptError "$MISSING"
+	fi
+	echo >&2 "Done."
+}
+
+
 function InstallHamlib () {
 	if command -v rigctl >/dev/null 2>&1
 	then  # Hamlib installed
@@ -420,31 +443,6 @@ This Pi must be connected to the Internet for this script to work.\n\n \
 --column Action < "$TFILE" --buttons-layout=center --button=Cancel:1 --button="$1 All Installed":2 --button=OK:0)"
 }
 
-
-function CheckDepInstalled() {
-	# Checks the installation status of a list of packages. Installs them if they are not
-	# installed.
-	# Takes 1 argument: a string containing the apps to check with apps separated by space
-	#MISSING=$(dpkg --get-selections $1 2>&1 | grep -v 'install$' | awk '{ print $6 }')
-	#MISSING=$(dpkg-query -W -f='${Package} ${Status}\n' $1 2>&1 | grep 'not-installed$' | awk '{ print $1 }')
-	echo >&2 "Checking dependencies..."
-	MISSING=""
-   for P in $1
-   do
-      if apt-cache --no-generate policy $P 2>/dev/null | grep -q "Installed: (none)"
-      then
-         MISSING+="$P "
-         echo "$P will be installed"
-      else
-      	echo "$P already installed"
-      fi
-   done
-	if [[ ! -z $MISSING ]]
-	then
-		sudo apt-get -y install $MISSING || AptError "$MISSING"
-	fi
-	echo >&2 "Done."
-}
 
 function AdjustSwap() {
 	CURRENT_SWAP="$(grep "^CONF_SWAPSIZE" $SWAP_FILE)"
