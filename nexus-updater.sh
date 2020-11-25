@@ -431,7 +431,7 @@ function CheckDepInstalled() {
 	MISSING=""
    for P in $1
    do
-      if apt-cache policy $P | grep -q "Installed: (none)"
+      if apt-cache --no-generate policy $P 2>/dev/null | grep -q "Installed: (none)"
       then
          MISSING+="$P "
          echo "$P will be installed"
