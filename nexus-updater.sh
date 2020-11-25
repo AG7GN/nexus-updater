@@ -303,6 +303,7 @@ function AdjustSwap() {
 	NEW_SWAP="${1:-$SWAP}"
 	if [[ $NEW_SWAP != $CURRENT_SWAP ]]
 	then
+		echo >&2 "Adjust swap space"
 		sudo sed -i -e "s/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=$NEW_SWAP/" $SWAP_FILE
 		sudo systemctl restart dphys-swapfile
 	fi
