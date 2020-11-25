@@ -390,7 +390,7 @@ function GenerateList () {
 				fi
 				;;
 			nexus-rmsgw)
-				if [[ -s /usr/local/src/nexus/nexus-rmsgw.version ]]
+				if command -v rmsgw_aci 1>/dev/null 2>&1
 				then
 					echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE" 
 				else
