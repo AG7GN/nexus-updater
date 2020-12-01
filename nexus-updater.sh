@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.9
+#-    version         ${SCRIPT_NAME} 2.0.10
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -1079,6 +1079,7 @@ EOF
 			;;
 
       nexus-utilities)
+      	CheckDepInstalled "imagemagick"
       	NexusLocalRepoUpdate nexus-utilities $NEXUSUTILS_GIT_URL
       	;;
 
