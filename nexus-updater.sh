@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.7
+#-    version         ${SCRIPT_NAME} 2.0.8
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -821,7 +821,7 @@ fi
 sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list
 sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list.d/raspi.list
 
-APPS="$(echo "${1,,}" | tr ',' '\n' | sort -u | xargs)"
+CheckDepInstalled "extra-xdg-menus bc dnsutils libgtk-3-bin jq moreutils exfat-utils build-essential autoconf automake libtool checkinstall git aptitude"
 
 # Check age of apt cache. Run apt update if more than an hour old
 LAST_APT_UPDATE=$(stat -c %Z /var/lib/apt/lists/partial)
@@ -835,8 +835,7 @@ then
 #	echo >&2 "apt cache less than an hour old"
 fi
 
-
-CheckDepInstalled "extra-xdg-menus bc dnsutils libgtk-3-bin jq moreutils exfat-utils build-essential autoconf automake libtool checkinstall git"
+APPS="$(echo "${1,,}" | tr ',' '\n' | sort -u | xargs)"
 
 for APP in $APPS
 do
@@ -866,7 +865,7 @@ do
 					sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list.d/raspi.list
 					#sudo apt update || AptError "sudo apt update"
 					InstallHamlib
-					CheckDepInstalled "asciidoc asciidoc-base asciidoc-common autopoint debhelper dh-autoreconf dh-strip-nondeterminism docbook-xsl dwz gettext intltool-debian libarchive-zip-perl libasound2 libblkid-dev libc6 libffi-dev libfile-stripnondeterminism-perl libflac-dev libfltk1.3 libfltk-images1.3 libflxmlrpc1 libflxmlrpc-dev libgcc1 libglib2.0-dev libglib2.0-dev-bin libjack-jackd2-0 libjack-jackd2-dev libmount-dev libogg-dev libpng16-16 libportaudio2 libportaudiocpp0 libpulse0 libpulse-dev libsamplerate0 libsamplerate0-dev libselinux1-dev libsepol1-dev libsndfile1 libsndfile1-dev libstdc++6 libusb-1.0-0-dev libusb-1.0-doc libvorbis-dev libx11-6 libxft-dev libxml2-utils pavucontrol po-debconf portaudio19-dev synaptic xsltproc zlib1g"
+					CheckDepInstalled "asciidoc asciidoc-base asciidoc-common autopoint debhelper dh-autoreconf dh-strip-nondeterminism docbook-xsl dwz gettext intltool-debian libarchive-zip-perl libasound2 libblkid-dev libc6 libffi-dev libfile-stripnondeterminism-perl libflac-dev libfltk-cairo1.3 libfltk-forms1.3 libfltk-gl1.3 libfltk1.3-dev libglu1-mesa libfltk1.3 libfltk-images1.3 libflxmlrpc1 libflxmlrpc-dev libgcc1 libglib2.0-dev libglib2.0-dev-bin libjack-jackd2-0 libjack-jackd2-dev libmount-dev libogg-dev libpng16-16 libportaudio2 libportaudiocpp0 libpulse0 libpulse-dev libsamplerate0 libsamplerate0-dev libselinux1-dev libsepol1-dev libsndfile1 libsndfile1-dev libstdc++6 libusb-1.0-0-dev libusb-1.0-doc libvorbis-dev libx11-6 libxft-dev libxml2-utils pavucontrol po-debconf portaudio19-dev synaptic xsltproc zlib1g"
 					FLDIGI_DEPS_INSTALLED=$TRUE
 				fi
       		AdjustSwap 2048
