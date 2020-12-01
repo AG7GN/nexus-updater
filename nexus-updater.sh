@@ -1251,6 +1251,8 @@ EOF
 	     				echo >&2 "============= linpac installed/updated ================="
 					else
      					echo >&2 "============= linpac install failed ================="	
+     					cd $SRC_DIR
+     					rm -rf linpac/
 					fi
 				fi
 			;;
