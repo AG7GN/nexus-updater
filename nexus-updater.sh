@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.6
+#-    version         ${SCRIPT_NAME} 2.0.7
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -817,6 +817,9 @@ then
 fi
 # If we get here, script was called with apps to install/update, so no GUI
 
+# Make sure source code URIs are enabled
+sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list
+sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list.d/raspi.list
 
 APPS="$(echo "${1,,}" | tr ',' '\n' | sort -u | xargs)"
 
@@ -900,6 +903,7 @@ do
             else
                echo >&2 "========= $APP installation/update FAILED ========="
                cd $SRC_DIR
+               rm -rf $APP/
                SafeExit 1
             fi
             AdjustSwap
@@ -957,6 +961,7 @@ EOF
          	else
             	echo "========= $APP installation FAILED ==========="
 	            cd $SRC_DIR
+               rm -rf Xastir/
 	            SafeExit 1
          	fi
          fi
@@ -989,6 +994,8 @@ EOF
                echo "========= $APP installation complete ==========="
             else
                echo >&2 "========= $APP installation FAILED ==========="
+               cd $SRC_DIR
+               rm -rf direwolf/
                SafeExit 1
             fi
 			fi
