@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.8
+#-    version         ${SCRIPT_NAME} 2.0.9
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -254,6 +254,7 @@ function CheckDepInstalled() {
 	if [[ ! -z $MISSING ]]
 	then
 		sudo apt-get -y install $MISSING || AptError "$MISSING"
+		[[ $MISSING =~ aptitude ]] && sudo aptitude update
 	fi
 	echo >&2 "Done."
 }
@@ -303,9 +304,10 @@ function AdjustSwap() {
 	NEW_SWAP="${1:-$SWAP}"
 	if [[ $NEW_SWAP != $CURRENT_SWAP ]]
 	then
-		echo >&2 "Adjust swap space"
+		echo >&2 "Adjusting swap space..."
 		sudo sed -i -e "s/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=$NEW_SWAP/" $SWAP_FILE
 		sudo systemctl restart dphys-swapfile
+		echo >&2 "Done."
 	fi
 }
 
@@ -823,11 +825,11 @@ sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list.d/raspi.list
 
 CheckDepInstalled "extra-xdg-menus bc dnsutils libgtk-3-bin jq moreutils exfat-utils build-essential autoconf automake libtool checkinstall git aptitude"
 
-# Check age of apt cache. Run apt update if more than an hour old
+# Check age of apt cache. Run apt update if more than 2 hours old
 LAST_APT_UPDATE=$(stat -c %Z /var/lib/apt/lists/partial)
 NOW=$(date +%s)
 [[ -z $LAST_APT_UPDATE ]] && LAST_APT_UPDATE=0
-if (( $( expr $NOW - $LAST_APT_UPDATE ) > 3600 ))
+if (( $( expr $NOW - $LAST_APT_UPDATE ) > 7200 ))
 then
 	echo >&2 "Updating apt cache"
 	sudo apt update || AptError "'apt update' failed!"
