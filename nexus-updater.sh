@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.11
+#-    version         ${SCRIPT_NAME} 2.0.12
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -325,7 +325,7 @@ function InstallPiardop() {
    	wget -q -O $PIARDOP_BIN "${ARDOP[$V]}" || { echo >&2 "======= ${ARDOP[$V]} download failed with $? ========"; SafeExit 1; }
    	chmod +x $PIARDOP_BIN
    	sudo mv $PIARDOP_BIN /usr/local/bin/
-#	    cat > $HOME/.asoundrc << EOF
+#	    cat >> $HOME/.asoundrc << EOF
 #pcm.ARDOP {
 #type rate
 #slave {
@@ -347,8 +347,8 @@ function CheckInternet() {
       	 --text="<b>No Internet connection found.  Check your Internet connection \
 and run this script again.</b>" --buttons-layout=center \
 	       --button=Close:0
-   SafeExit 1
-fi
+   	SafeExit 1
+	fi
 
 }
 
@@ -384,7 +384,7 @@ function GenerateList () {
 				fi
 				;;
 			nexus-utilities)
-				if [ -s /usr/local/src/nexus/nexus-utilities.version ]
+				if [ -s /usr/local/src/nexus/$A.version ]
 				then
 					echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE" 
 				else
@@ -537,6 +537,7 @@ PAT_GIT_URL="$GITHUB_URL/la5nta/pat/releases"
 CHIRP_URL="https://trac.chirp.danplanet.com/chirp_daily/LATEST"
 NEXUS_UPDATER_GIT_URL="$GITHUB_URL/AG7GN/nexus-updater"
 NEXUSUTILS_GIT_URL="$GITHUB_URL/AG7GN/nexus-utilities"
+NEXUS_AUDIO_GIT_URL="$GITHUB_URL/AG7GN/nexus-audio"
 IPTABLES_GIT_URL="$GITHUB_URL/AG7GN/nexus-iptables"
 AUTOHOTSPOT_GIT_URL="$GITHUB_URL/AG7GN/autohotspot"
 KENWOOD_GIT_URL="$GITHUB_URL/AG7GN/kenwood"
@@ -847,10 +848,6 @@ do
    	raspbian)
 			echo -e "\n=========== Raspbian OS Update Requested ==========="
 			sudo apt -m -y upgrade && echo -e "=========== Raspbian OS Update Finished ==========="
-			# Make sure pulseaudio is not default sound device.  If pulseaudio is updated,
-			# it might restore this file and make pulseaudio the default sound interface.
-			# So, we make sure every nonempty line is commented out.
-			sudo sed -i -e '/^[^#]/ s/^#*/#/' /usr/share/alsa/pulse-alsa.conf
    		;;
 
    	nexus-updater)
@@ -1081,6 +1078,10 @@ EOF
       nexus-utilities)
       	CheckDepInstalled "imagemagick"
       	NexusLocalRepoUpdate nexus-utilities $NEXUSUTILS_GIT_URL
+      	;;
+
+      nexus-audio)
+      	NexusLocalRepoUpdate nexus-audio $NEXUS_AUDIO_GIT_URL
       	;;
 
       fe-pi)
