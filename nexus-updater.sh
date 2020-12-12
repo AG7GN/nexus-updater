@@ -567,7 +567,7 @@ LINBPQ_DOC="http://www.cantab.net/users/john.wiseman/Downloads/Beta/HTMLPages.zi
 LINPAC_GIT_URL="https://git.code.sf.net/p/linpac/linpac"
 URONODE_GIT_URL="https://git.code.sf.net/p/uronode/git uronode-git"
 YAAC_URL="https://www.ka2ddo.org/ka2ddo/YAAC.zip"
-QSSTV_URL="http://users.telenet.be/on4qz/qsstv/downloads/"
+QSSTV_URL="http://users.telenet.be/on4qz/qsstv/downloads"
 REBOOT="NO"
 #SRC_DIR="/usr/local/src/nexus"
 #SHARE_DIR="/usr/local/share/nexus"
@@ -1333,13 +1333,14 @@ EOF
 		qsstv)
          echo "======== $APP install/upgrade was requested ========="
          TAR_FILE="$(wget -q -O - $QSSTV_URL | egrep -o 'href="qsstv_.*.tar.gz"' | cut -d'"' -f2)"
+         echo "TAR=$TAR_FILE"
 			[[ $TAR_FILE == "" ]] && { echo >&2 "======= Download failed.  Could not find tar file URL ========"; SafeExit 1; }
-         mkdir -p qsstv
-         cd qsstv
-         echo >&2 "=========== Retrieving $APP from $QSSTV_URL/$TAR_FILE ==========="
-         wget -q $QSSTV_URL/$TAR_FILE || { echo >&2 "======= $QSSTV_URL/$TAR_FILE download failed with $? ========"; SafeExit 1; }
          CheckDepInstalled "qt5-qmake g++ libfftw3-dev qt5-default libpulse-dev libasound2-dev  libv4l-dev libopenjp2-7-dev"
          InstallHamlib
+         mkdir -p qsstv
+         cd qsstv        
+         echo >&2 "=========== Retrieving $APP from $QSSTV_URL/$TAR_FILE ==========="
+         wget -q -O $TAR_FILE $QSSTV_URL/$TAR_FILE || { echo >&2 "======= $QSSTV_URL/$TAR_FILE download failed with $? ========"; SafeExit 1; }
          tar xzvf $TAR_FILE
          cd "${TAR_FILE%.tar.gz}"
          if qmake -qt=qt5 && make && sudo make install
