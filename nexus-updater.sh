@@ -154,7 +154,13 @@ function LocalRepoUpdate() {
 	UP_TO_DATE=$FALSE
 	REQUEST="$1"
 	URL="$2"
-	GIT_DIR="$(echo ${URL##*/} | sed -e 's/\.git$//')"
+	REPO_NAME="$(echo "$URL" | cut -s -d' ' -f2)"
+	if [[ -z $REPO_NAME ]]
+	then
+		GIT_DIR="$(echo ${URL##*/} | sed -e 's/\.git$//')"
+	else
+		GIT_DIR="$REPO_NAME"
+	fi
 	cd $SRC_DIR
 	echo "============= $REQUEST install/update requested ========"
 	# See if local git repository exists. Create it ('git clone') if not
@@ -481,7 +487,6 @@ function Help () {
 	APPS[wsjtx]="https://physics.princeton.edu/pulsar/K1JT/wsjtx.html"
 	APPS[xastir]="http://xastir.org/index.php/Main_Page"
 	APPS[nexus-backup-restore]="https://github.com/AG7GN/nexus-backup-restore/blob/master/README.md"
-	APPS[hamapps]="https://github.com/AG7GN/hamapps/blob/master/README.md"
 	APPS[nexus-iptables]="https://github.com/AG7GN/nexus-iptables/blob/master/README.md"
 	APPS[nexus-utilities]="https://github.com/AG7GN/nexus-utilities/blob/master/README.md"
 	APPS[autohotspot]="https://github.com/AG7GN/autohotspot/blob/master/README.md"
@@ -492,6 +497,7 @@ function Help () {
 	APPS[linbpq]="http://www.cantab.net/users/john.wiseman/Documents/InstallingLINBPQ.html"
 	APPS[linpac]="https://sourceforge.net/projects/linpac/"
 	APPS[hamlib]="https://github.com/Hamlib/Hamlib"
+	APPS[uronode]="https://www.mankier.com/8/uronode"
 	APP="$2"
 	$BROWSER ${APPS[$APP]} 2>/dev/null &
 }
@@ -549,6 +555,7 @@ JS8CALL_URL="http://files.js8call.com/latest.html"
 LINBPQ_URL="http://www.cantab.net/users/john.wiseman/Downloads/Beta/pilinbpq"
 LINBPQ_DOC="http://www.cantab.net/users/john.wiseman/Downloads/Beta/HTMLPages.zip"
 LINPAC_GIT_URL="https://git.code.sf.net/p/linpac/linpac"
+URONODE_GIT_URL="https://git.code.sf.net/p/uronode/git uronode-git"
 REBOOT="NO"
 #SRC_DIR="/usr/local/src/nexus"
 #SHARE_DIR="/usr/local/share/nexus"
@@ -588,6 +595,7 @@ DESC[linbpq]="G8BPQ AX25 Networking Package"
 DESC[pat]="Winlink Email Client"
 DESC[piardop]="Amateur Radio Digital Open Protocol Modem Versions 1&#x26;2"
 DESC[pmon]="PACTOR Monitoring Utility"
+DESC[uronode]="Node front end for AX.25, NET/ROM, Rose and TCP"
 DESC[wsjtx]="Weak Signal Modes Modem"
 DESC[xastir]="APRS Tracking and Mapping Utility"
 
@@ -1255,6 +1263,27 @@ EOF
 				fi
 			;;
 			
+		uronode)
+				if (LocalRepoUpdate uronode "$URONODE_GIT_URL") || [[ $FORCE == $TRUE ]]
+				then
+					CheckDepInstalled "libax25"
+					DIR_="$(echo "$URONODE_GIT_URL" | cut -d' ' -f2)"
+					cd $SRC_DIR/$DIR_
+					autoreconf --install
+					if (./configure && make)
+					then 
+						sudo make install
+						sudo make installhelp
+						sudo make installconf
+	     				echo >&2 "============= uronode installed/updated ================="
+					else
+     					echo >&2 "============= uronode install failed ================="	
+     					cd $SRC_DIR
+     					rm -rf $DIR_
+					fi
+				fi
+			;;
+
       *)
          echo "Skipping unknown app \"$APP\"."
          ;;
