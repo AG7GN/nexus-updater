@@ -1338,6 +1338,7 @@ EOF
          wget -q $QSSTV_URL/$TAR_FILE || { echo >&2 "======= $QSSTV_URL/$TAR_FILE download failed with $? ========"; SafeExit 1; }
          CheckDepInstalled "qt5-qmake g++ libfftw3-dev qt5-default libpulse-dev libasound2-dev  libv4l-dev libopenjp2-7-dev"
          InstallHamlib
+         tar xzvf $TAR_FILE
          cd "${TAR_FILE%.tar.gz}"
          qmake -qt=qt5 && make && sudo make install
 			echo >&2 "============= qsstv installed/updated ================="
