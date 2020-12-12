@@ -1307,7 +1307,7 @@ EOF
          unzip ${YAAC_URL##*/} -d $HOME/YAAC
          cd $HOME/YAAC
          echo >&2 "=========== Installing $APP ==========="
-         if [[ -s /usr/local/share/applications/YAAC.desktop ]]
+         if [[ ! -s /usr/local/share/applications/YAAC.desktop ]]
          then
         		cat > $HOME/.local/share/applications/YAAC.desktop << EOF
 [Desktop Entry]
