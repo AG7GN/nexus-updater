@@ -921,6 +921,7 @@ do
                done  
                [ -f /usr/local/share/applications/${APP}.desktop ] && sudo mv -f /usr/local/share/applications/${APP}.desktop /usr/local/share/applications/${APP}.desktop.disabled
                [ -f /usr/local/share/applications/flarq.desktop ] && sudo mv -f /usr/local/share/applications/flarq.desktop /usr/local/share/applications/flarq.desktop.disabled
+               [ -f /usr/local/share/applications/flwrap.desktop.disabled ] && sudo mv -f /usr/local/share/applications/flwrap.desktop.disabled /usr/local/share/applications/flwrap.desktop
                lxpanelctl restart
                cd $SRC_DIR
                echo "========= $APP installation/update done ==========="
