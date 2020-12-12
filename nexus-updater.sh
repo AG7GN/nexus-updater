@@ -570,7 +570,7 @@ FLDIGI_DEPS_INSTALLED=$FALSE
 SWAP_FILE="/etc/dphys-swapfile"
 SWAP="$(grep "^CONF_SWAPSIZE" $SWAP_FILE | cut -d= -f2)"
 
-LIST="raspbian 710 arim autohotspot chirp direwolf flamp fldigi flmsg flrig flwrap hamlib js8call linbpq linpac nexus-backup-restore nexus-iptables nexus-rmsgw nexus-updater nexus-utilities pat piardop pmon wsjtx xastir"
+LIST="raspbian 710 arim autohotspot chirp direwolf flamp fldigi flmsg flrig flwrap hamlib js8call linbpq linpac nexus-backup-restore nexus-iptables nexus-rmsgw nexus-updater nexus-utilities pat piardop pmon uronode wsjtx xastir"
 declare -A DESC
 DESC[raspbian]="Raspbian OS and Apps"
 DESC[710]="Rig Control Scripts for Kenwood 710/71A"
