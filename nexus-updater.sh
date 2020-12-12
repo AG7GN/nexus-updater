@@ -448,8 +448,6 @@ function GenerateList () {
 					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
 				fi
 				;;    
-			qsstv)
-				;;   		
 			*)
 		   	if command -v $A 1>/dev/null 2>&1 
 				then
