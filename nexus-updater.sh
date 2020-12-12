@@ -447,7 +447,9 @@ function GenerateList () {
 				else
 					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
 				fi
-				;;       		
+				;;    
+			qsstv)
+				;;   		
 			*)
 		   	if command -v $A 1>/dev/null 2>&1 
 				then
@@ -507,6 +509,7 @@ function Help () {
 	APPS[hamlib]="https://github.com/Hamlib/Hamlib"
 	APPS[uronode]="https://www.mankier.com/8/uronode"
 	APPS[yaac]="https://www.ka2ddo.org/ka2ddo/YAAC.html"
+	APPS[qsstv]="http://users.telenet.be/on4qz/index.html"
 	APP="$2"
 	$BROWSER ${APPS[$APP]} 2>/dev/null &
 }
@@ -566,6 +569,7 @@ LINBPQ_DOC="http://www.cantab.net/users/john.wiseman/Downloads/Beta/HTMLPages.zi
 LINPAC_GIT_URL="https://git.code.sf.net/p/linpac/linpac"
 URONODE_GIT_URL="https://git.code.sf.net/p/uronode/git uronode-git"
 YAAC_URL="https://www.ka2ddo.org/ka2ddo/YAAC.zip"
+QSSTV_URL="http://users.telenet.be/on4qz/qsstv/downloads/"
 REBOOT="NO"
 #SRC_DIR="/usr/local/src/nexus"
 #SHARE_DIR="/usr/local/share/nexus"
@@ -580,7 +584,7 @@ FLDIGI_DEPS_INSTALLED=$FALSE
 SWAP_FILE="/etc/dphys-swapfile"
 SWAP="$(grep "^CONF_SWAPSIZE" $SWAP_FILE | cut -d= -f2)"
 
-LIST="raspbian 710 arim autohotspot chirp direwolf flamp fldigi flmsg flrig flwrap hamlib js8call linbpq linpac nexus-backup-restore nexus-iptables nexus-rmsgw nexus-updater nexus-utilities pat piardop pmon uronode wsjtx yaac xastir"
+LIST="raspbian 710 arim autohotspot chirp direwolf flamp fldigi flmsg flrig flwrap hamlib js8call linbpq linpac nexus-backup-restore nexus-iptables nexus-rmsgw nexus-updater nexus-utilities pat piardop pmon qsstv uronode wsjtx yaac xastir"
 declare -A DESC
 DESC[raspbian]="Raspbian OS and Apps"
 DESC[710]="Rig Control Scripts for Kenwood 710/71A"
@@ -609,6 +613,7 @@ DESC[uronode]="Node front end for AX.25, NET/ROM, Rose and TCP"
 DESC[wsjtx]="Weak Signal Modes Modem"
 DESC[yaac]="Yet Another APRS Client"
 DESC[xastir]="APRS Tracking and Mapping Utility"
+DESC[qsstv]="Receiving and transmitting SSTV/DSSTV"
 
 
 #============================
@@ -1323,8 +1328,23 @@ Categories=HamRadio;
 EOF
 				mv -f $HOME/.local/share/applications/YAAC.desktop /usr/local/share/applications/
 			fi
+			echo >&2 "============= yaac installed/updated ================="
 			;;
 
+		qsstv)
+         echo "======== $APP install/upgrade was requested ========="
+         TAR_FILE="$(wget -q -O - $QSSTV_URL | egrep -o 'href="qsstv_.*.tar.gz"' | cut -d'"' -f2)"
+			[[ $TAR_FILE == "" ]] && { echo >&2 "======= Download failed.  Could not find tar file URL ========"; SafeExit 1; }
+         mkdir -p qsstv
+         cd qsstv
+         echo >&2 "=========== Retrieving $APP from $QSSTV_URL/$TAR_FILE ==========="
+         wget -q $QSSTV_URL/$TAR_FILE || { echo >&2 "======= $QSSTV_URL/$TAR_FILE download failed with $? ========"; SafeExit 1; }
+         CheckDepInstalled "qt5-qmake g++ libfftw3-dev qt5-default libpulse-dev libasound2-dev  libv4l-dev libopenjp2-7-dev"
+         InstallHamlib
+         cd "${TAR_FILE%.tar.gz}"
+         qmake -qt=qt5 && make && sudo make install
+			echo >&2 "============= qsstv installed/updated ================="
+         ;;
       *)
          echo "Skipping unknown app \"$APP\"."
          ;;
