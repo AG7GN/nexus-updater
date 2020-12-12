@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.12
+#-    version         ${SCRIPT_NAME} 2.0.13
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -546,7 +546,6 @@ PMON_REPO="https://www.scs-ptc.com/repo/packages/"
 PMON_GIT_URL="$GITHUB_URL/AG7GN/pmon"
 NEXUS_RMSGW_GIT_URL="$GITHUB_URL/AG7GN/nexus-rmsgw"
 JS8CALL_URL="http://files.js8call.com/latest.html"
-FEPI_GIT_URL="$GITHUB_URL/AG7GN/fe-pi"
 LINBPQ_URL="http://www.cantab.net/users/john.wiseman/Downloads/Beta/pilinbpq"
 LINBPQ_DOC="http://www.cantab.net/users/john.wiseman/Downloads/Beta/HTMLPages.zip"
 LINPAC_GIT_URL="https://git.code.sf.net/p/linpac/linpac"
@@ -850,6 +849,33 @@ do
 			sudo apt -m -y upgrade && echo -e "=========== Raspbian OS Update Finished ==========="
    		;;
 
+      710)
+      	NexusLocalRepoUpdate "710 scripts" $KENWOOD_GIT_URL
+      	;;
+
+      nexus-utilities)
+      	CheckDepInstalled "imagemagick"
+      	NexusLocalRepoUpdate nexus-utilities $NEXUSUTILS_GIT_URL
+      	;;
+
+      nexus-audio)
+      	NexusLocalRepoUpdate nexus-audio $NEXUS_AUDIO_GIT_URL
+      	;;
+
+      nexus-backup-restore)
+      	NexusLocalRepoUpdate nexus-backup-restore $NEXUS_BU_RS_GIT_URL
+      	;;
+
+      nexus-iptables)
+      	NexusLocalRepoUpdate nexus-iptables $IPTABLES_GIT_URL
+      	;;
+
+     	nexus-rmsgw)
+     		CheckDepInstalled "xutils-dev libxml2 libxml2-dev libncurses5-dev python-requests"
+     		echo "Depencies Checked for nexus-rmsgw"
+     		NexusLocalRepoUpdate nexus-rmsgw $NEXUS_RMSGW_GIT_URL
+     		;;
+
    	nexus-updater)
    		NexusLocalRepoUpdate nexus-updater $NEXUS_UPDATER_GIT_URL
    		;;
@@ -1075,33 +1101,8 @@ EOF
          echo "============= $APP installed/updated ============="
 			;;
 
-      nexus-utilities)
-      	CheckDepInstalled "imagemagick"
-      	NexusLocalRepoUpdate nexus-utilities $NEXUSUTILS_GIT_URL
-      	;;
-
-      nexus-audio)
-      	NexusLocalRepoUpdate nexus-audio $NEXUS_AUDIO_GIT_URL
-      	;;
-
-      fe-pi)
-      	NexusLocalRepoUpdate fe-pi $FEPI_GIT_URL
-      	;;
-
       autohotspot)
       	NexusLocalRepoUpdate autohotspot $AUTOHOTSPOT_GIT_URL
-      	;;
-
-      nexus-backup-restore)
-      	NexusLocalRepoUpdate nexus-backup-restore $NEXUS_BU_RS_GIT_URL
-      	;;
-
-      710)
-      	NexusLocalRepoUpdate "710 scripts" $KENWOOD_GIT_URL
-      	;;
-
-      nexus-iptables)
-      	NexusLocalRepoUpdate nexus-iptables $IPTABLES_GIT_URL
       	;;
 
       chirp)
@@ -1161,12 +1162,6 @@ EOF
 				sudo apt -y install --reinstall pmon || AptError "sudo apt install pmon"
 			fi
 			NexusLocalRepoUpdate pmon $PMON_GIT_URL
-     		;;
-
-     	nexus-rmsgw)
-     		CheckDepInstalled "xutils-dev libxml2 libxml2-dev libncurses5-dev python-requests"
-     		echo "Depencies Checked for nexus-rmsgw"
-     		NexusLocalRepoUpdate nexus-rmsgw $NEXUS_RMSGW_GIT_URL
      		;;
 
       wsjtx|js8call)
