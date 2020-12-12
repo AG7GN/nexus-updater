@@ -272,7 +272,6 @@ function InstallHamlib () {
 		if dpkg -l libhamlib2 >/dev/null 2>&1
 		then  # Hamlib installed via apt. Remove it.
 			sudo apt -y remove --purge libhamlib2 libhamlib-dev libhamlib-utils*
-			sudo apt-mark hold libhamlib2
 			#sudo apt-mark hold libhamlib-dev
 			echo
 			echo
@@ -293,9 +292,8 @@ function InstallHamlib () {
 		./configure && make && sudo make install
 		sudo ldconfig
 		cd -
+		sudo apt-mark hold libhamlib2 libhamlib-dev libhamlib-utils
 	fi
-	#sudo apt -y install libhamlib2 libhamlib-dev libhamlib-utils*
-	#return $?
 }
 
 
@@ -508,6 +506,7 @@ function Help () {
 	APPS[uronode]="https://www.mankier.com/8/uronode"
 	APPS[yaac]="https://www.ka2ddo.org/ka2ddo/YAAC.html"
 	APPS[qsstv]="http://users.telenet.be/on4qz/index.html"
+	APPS[cqrlog]="https://www.cqrlog.com"
 	APP="$2"
 	$BROWSER ${APPS[$APP]} 2>/dev/null &
 }
@@ -568,6 +567,7 @@ LINPAC_GIT_URL="https://git.code.sf.net/p/linpac/linpac"
 URONODE_GIT_URL="https://git.code.sf.net/p/uronode/git uronode-git"
 YAAC_URL="https://www.ka2ddo.org/ka2ddo/YAAC.zip"
 QSSTV_URL="http://users.telenet.be/on4qz/qsstv/downloads"
+CQRLOG_GIT_URL="https://github.com/ok2cqr/cqrlog.git"
 REBOOT="NO"
 #SRC_DIR="/usr/local/src/nexus"
 #SHARE_DIR="/usr/local/share/nexus"
@@ -582,7 +582,7 @@ FLDIGI_DEPS_INSTALLED=$FALSE
 SWAP_FILE="/etc/dphys-swapfile"
 SWAP="$(grep "^CONF_SWAPSIZE" $SWAP_FILE | cut -d= -f2)"
 
-LIST="raspbian 710 arim autohotspot chirp direwolf flamp fldigi flmsg flrig flwrap hamlib js8call linbpq linpac nexus-backup-restore nexus-iptables nexus-rmsgw nexus-updater nexus-utilities pat piardop pmon qsstv uronode wsjtx yaac xastir"
+LIST="raspbian 710 arim autohotspot chirp cqrlog direwolf flamp fldigi flmsg flrig flwrap hamlib js8call linbpq linpac nexus-backup-restore nexus-iptables nexus-rmsgw nexus-updater nexus-utilities pat piardop pmon qsstv uronode wsjtx yaac xastir"
 declare -A DESC
 DESC[raspbian]="Raspbian OS and Apps"
 DESC[710]="Rig Control Scripts for Kenwood 710/71A"
@@ -612,6 +612,7 @@ DESC[wsjtx]="Weak Signal Modes Modem"
 DESC[yaac]="Yet Another APRS Client"
 DESC[xastir]="APRS Tracking and Mapping Utility"
 DESC[qsstv]="Receiving and transmitting SSTV/DSSTV"
+DESC[cqrlog]="Ham radio logger"
 
 
 #============================
@@ -1333,9 +1334,11 @@ EOF
 		qsstv)
          echo "======== $APP install/upgrade was requested ========="
          TAR_FILE="$(wget -q -O - $QSSTV_URL | egrep -o 'href="qsstv_.*.tar.gz"' | cut -d'"' -f2)"
-         echo "TAR=$TAR_FILE"
+         CV_=${TAR_FILE%.tar.gz}
+         CURRENT_VERSION=${CV_#*_}
+         INSTALLED_VERSION=         
 			[[ $TAR_FILE == "" ]] && { echo >&2 "======= Download failed.  Could not find tar file URL ========"; SafeExit 1; }
-         CheckDepInstalled "qt5-qmake g++ libfftw3-dev qt5-default libpulse-dev libasound2-dev  libv4l-dev libopenjp2-7-dev"
+         CheckDepInstalled "qt5-qmake g++ libfftw3-dev qt5-default libpulse-dev libasound2-dev libv4l-dev libopenjp2-7-dev"
          InstallHamlib
          mkdir -p qsstv
          cd qsstv        
@@ -1343,9 +1346,25 @@ EOF
          wget -q -O $TAR_FILE $QSSTV_URL/$TAR_FILE || { echo >&2 "======= $QSSTV_URL/$TAR_FILE download failed with $? ========"; SafeExit 1; }
          tar xzvf $TAR_FILE
          cd ${TAR_FILE%.tar.gz}
-         if qmake -qt=qt5 && make && sudo make install
+         if qmake -qt=qt5 && make -j4 && sudo make install
          then
+           	cat > $HOME/.local/share/applications/qsstv.desktop << EOF
+[Desktop Entry]
+Name=QSSTV
+Encoding=UTF-8
+GenericName=QSSTV
+Comment=Slow Scan TV
+Exec=sh -c 'PULSE_SINK=fepi-playback PULSE_SOURCE=fepi-capture qsstv'
+Icon=/usr/share/pixmaps/CQ.png
+Terminal=false
+Type=Application
+Categories=HamRadio;
+EOF
+            	sudo mv -f $HOME/.local/share/applications/qsstv.desktop /usr/local/share/applications/
 				echo >&2 "============= qsstv installed/updated ================="
+				cd $SRC_DIR
+				rm -rf qsstv/${TAR_FILE%.tar.gz}
+				rm qsstv/$TAR_FILE
          else
 				echo >&2 "============= qsstv install failed ================="	
 				cd $SRC_DIR
@@ -1353,6 +1372,25 @@ EOF
 				SafeExit 1
          fi
          ;;
+         
+      cqrlog)
+				if (LocalRepoUpdate cqrlog "$CQRLOG_GIT_URL") || [[ $FORCE == $TRUE ]]
+				then
+					CheckDepInstalled "lazarus lcl fp-utils fp-units-misc fp-units-gfx fp-units-gtk2 fp-units-db fp-units-math fp-units-net libssl-dev mariadb-server mariadb-client"
+					cd cqrlog
+					if make
+					then 
+						make DESTDIR=$HOME/cqrlog install
+	     				echo >&2 "============= cqrlog installed/updated ================="
+					else
+     					echo >&2 "============= cqrlog install failed ================="	
+     					cd $SRC_DIR
+     					rm -rf cqrlog
+     					SafeExit 1
+					fi
+				fi
+			;;
+
       *)
          echo "Skipping unknown app \"$APP\"."
          ;;
