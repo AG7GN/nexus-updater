@@ -1298,22 +1298,22 @@ EOF
 
       yaac)
          echo "======== $APP install/upgrade was requested ========="
-         echo >&2 "=========== Retrieving $APP from $URL ==========="
+         echo >&2 "=========== Retrieving $APP from $YAAC_URL ==========="
          mkdir -p YAAC
          cd YAAC
-			wget -q $URL || { echo >&2 "======= $URL download failed with $? ========"; SafeExit 1; }
+			wget -q $YAAC_URL || { echo >&2 "======= $URL download failed with $? ========"; SafeExit 1; }
          CheckDepInstalled "openjdk-8-jre"  
          mkdir -p $HOME/YAAC
-         unzip ${URL##*/} -d $HOME/YAAC
+         unzip ${YAAC_URL##*/} -d $HOME/YAAC
          cd $HOME/YAAC
          echo >&2 "=========== Installing $APP ==========="
          if [[ -s /usr/local/share/applications/YAAC.desktop ]]
          then
         		cat > $HOME/.local/share/applications/YAAC.desktop << EOF
 [Desktop Entry]
-Name=YACC
+Name=YAAC
 Encoding=UTF-8
-GenericName=YACC
+GenericName=YAAC
 Comment=Yet Another APRS Client
 Exec=java -jar $HOME/YAAC/YAAC.jar
 Icon=$HOME/YAAC/images/yaaclogo32.ico
