@@ -1309,7 +1309,7 @@ EOF
 			wget -q $YAAC_URL || { echo >&2 "======= $URL download failed with $? ========"; SafeExit 1; }
          CheckDepInstalled "openjdk-8-jre"  
          mkdir -p $HOME/YAAC
-         unzip ${YAAC_URL##*/} -d $HOME/YAAC
+         unzip -o ${YAAC_URL##*/} -d $HOME/YAAC
          cd $HOME/YAAC
          echo >&2 "=========== Installing $APP ==========="
          if [[ ! -s /usr/local/share/applications/YAAC.desktop ]]
