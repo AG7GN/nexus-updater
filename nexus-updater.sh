@@ -1270,8 +1270,8 @@ EOF
 					DIR_="$(echo "$URONODE_GIT_URL" | cut -d' ' -f2)"
 					cd $SRC_DIR/$DIR_
 					autoreconf --install
-					./configure
-					if make <<<"N"
+					./configure <<<"n"
+					if make
 					then 
 						sudo make install
 						sudo make installhelp
