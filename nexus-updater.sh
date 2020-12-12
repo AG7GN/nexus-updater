@@ -1325,7 +1325,7 @@ Terminal=false
 Type=Application
 Categories=HamRadio;
 EOF
-				mv -f $HOME/.local/share/applications/YAAC.desktop /usr/local/share/applications/
+				sudo mv -f $HOME/.local/share/applications/YAAC.desktop /usr/local/share/applications/
 			fi
 			echo >&2 "============= yaac installed/updated ================="
 			;;
