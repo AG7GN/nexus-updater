@@ -1273,6 +1273,7 @@ EOF
      					echo >&2 "============= linpac install failed ================="	
      					cd $SRC_DIR
      					rm -rf linpac/
+     					SafeExit 1
 					fi
 				fi
 			;;
@@ -1295,6 +1296,7 @@ EOF
      					echo >&2 "============= uronode install failed ================="	
      					cd $SRC_DIR
      					rm -rf $DIR_
+     					SafeExit 1
 					fi
 				fi
 			;;
@@ -1340,8 +1342,15 @@ EOF
          InstallHamlib
          tar xzvf $TAR_FILE
          cd "${TAR_FILE%.tar.gz}"
-         qmake -qt=qt5 && make && sudo make install
-			echo >&2 "============= qsstv installed/updated ================="
+         if qmake -qt=qt5 && make && sudo make install
+         then
+				echo >&2 "============= qsstv installed/updated ================="
+         else
+				echo >&2 "============= qsstv install failed ================="	
+				cd $SRC_DIR
+				rm -rf qsstv
+				SafeExit 1
+         fi
          ;;
       *)
          echo "Skipping unknown app \"$APP\"."
