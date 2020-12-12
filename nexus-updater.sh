@@ -1342,7 +1342,7 @@ EOF
          echo >&2 "=========== Retrieving $APP from $QSSTV_URL/$TAR_FILE ==========="
          wget -q -O $TAR_FILE $QSSTV_URL/$TAR_FILE || { echo >&2 "======= $QSSTV_URL/$TAR_FILE download failed with $? ========"; SafeExit 1; }
          tar xzvf $TAR_FILE
-         cd "${TAR_FILE%.tar.gz}"
+         cd ${TAR_FILE%.tar.gz}
          if qmake -qt=qt5 && make && sudo make install
          then
 				echo >&2 "============= qsstv installed/updated ================="
