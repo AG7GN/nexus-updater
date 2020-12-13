@@ -1381,6 +1381,7 @@ EOF
 					cd $SRC_DIR
 					rm -rf qsstv
 					SafeExit 1
+				fi
 			else
 				echo "============= $APP is installed and up to date ============="			
          fi
