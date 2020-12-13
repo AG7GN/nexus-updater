@@ -1426,7 +1426,7 @@ EOF
 
       gpredict)
 	      echo "======== $APP install/upgrade was requested ========="
-			if (LocalRepoUpdate cqrlog "$GPREDICT_GIT_URL") || [[ $FORCE == $TRUE ]]
+			if (LocalRepoUpdate gpredict "$GPREDICT_GIT_URL") || [[ $FORCE == $TRUE ]]
 			then
 				CheckDepInstalled "libtool intltool autoconf automake libcurl4-openssl-dev pkg-config libglib2.0-dev libgtk-3-dev libgoocanvas-2.0-dev"
 				cd gpredict
