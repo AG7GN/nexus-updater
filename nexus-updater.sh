@@ -1345,7 +1345,7 @@ EOF
          echo "======== $APP install/upgrade was requested ========="
          TAR_FILE="$(wget -q -O - $QSSTV_URL | egrep -o 'href="qsstv_.*.tar.gz"' | cut -d'"' -f2)"
 			[[ $TAR_FILE == "" ]] && { echo >&2 "======= Download failed.  Could not find tar file URL ========"; SafeExit 1; }
-         LATEST_VERSION="qsstv/${TAR_FILE%.tar.gz}"
+         LATEST_VERSION="qsstv/${TAR_FILE}"
          INSTALLED_VERSION="$(stat -c %n qsstv/qsstv_*.tar.gz 2>/dev/null)"
         	echo >&2 "Latest version: $LATEST_VERSION   Installed version: $INSTALLED_VERSION"
          if [[ $LATEST_VERSION != $INSTALLED_VERSION ]] || [[ $FORCE == $TRUE ]]
