@@ -1376,11 +1376,24 @@ EOF
       cqrlog)
 				if (LocalRepoUpdate cqrlog "$CQRLOG_GIT_URL") || [[ $FORCE == $TRUE ]]
 				then
-					CheckDepInstalled "lazarus lcl fp-utils fp-units-misc fp-units-gfx fp-units-gtk2 fp-units-db fp-units-math fp-units-net libssl-dev mariadb-server mariadb-client"
+					CheckDepInstalled "lazarus lcl fp-utils fp-units-misc fp-units-gfx fp-units-gtk2 fp-units-db fp-units-math fp-units-net libssl-dev mariadb-server mariadb-client libmariadb-dev-compat"
 					cd cqrlog
 					if make
 					then 
 						make DESTDIR=$HOME/cqrlog install
+           			cat > $HOME/.local/share/applications/cqrlog.desktop << EOF
+[Desktop Entry]
+Name=CQRLOG
+Encoding=UTF-8
+GenericName=CQRLOG
+Comment=Ham Radio Logger
+Exec=$home/cqrlog/usr/bin/cqrlog >/dev/null 2>&1
+Icon=/usr/share/pixmaps/CQ.png
+Terminal=false
+Type=Application
+Categories=HamRadio;
+EOF
+            		sudo mv -f $HOME/.local/share/applications/cqrlog.desktop /usr/local/share/applications/
 	     				echo >&2 "============= cqrlog installed/updated ================="
 					else
      					echo >&2 "============= cqrlog install failed ================="	
