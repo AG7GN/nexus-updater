@@ -488,6 +488,7 @@ This Pi must be connected to the Internet for this script to work.\n\n \
 function Help () {
 	BROWSER="$(command -v chromium-browser)"
 	declare -A APPS
+	APPS[raspbian]="https://www.raspbian.org/"
 	APPS[fldigi]="http://www.w1hkj.com/FldigiHelp"
 	APPS[flmsg]="http://www.w1hkj.com/flmsg-help"
 	APPS[flamp]="http://www.w1hkj.com/flamp-help"
