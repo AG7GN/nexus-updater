@@ -1358,6 +1358,7 @@ EOF
          	wget -q -O $TAR_FILE $QSSTV_URL/$TAR_FILE || { echo >&2 "======= $QSSTV_URL/$TAR_FILE download failed with $? ========"; SafeExit 1; }
          	tar xzvf $TAR_FILE
          	cd ${TAR_FILE%.tar.gz}
+      		AdjustSwap 2048
          	if qmake -qt=qt5 && make -j4 && sudo make install
          	then
            		cat > $HOME/.local/share/applications/qsstv.desktop << EOF
@@ -1382,20 +1383,22 @@ EOF
 					rm -rf qsstv
 					SafeExit 1
 				fi
+				AdjustSwap
 			else
 				echo "============= $APP is installed and up to date ============="			
          fi
          ;;
          
       cqrlog)
-				if (LocalRepoUpdate cqrlog "$CQRLOG_GIT_URL") || [[ $FORCE == $TRUE ]]
-				then
-					CheckDepInstalled "lazarus lcl fp-utils fp-units-misc fp-units-gfx fp-units-gtk2 fp-units-db fp-units-math fp-units-net libssl-dev mariadb-server mariadb-client libmariadb-dev-compat"
-					cd cqrlog
-					if make -j4
-					then 
-						make DESTDIR=$HOME/cqrlog install
-           			cat > $HOME/.local/share/applications/cqrlog.desktop << EOF
+	      echo "======== $APP install/upgrade was requested ========="
+			if (LocalRepoUpdate cqrlog "$CQRLOG_GIT_URL") || [[ $FORCE == $TRUE ]]
+			then
+				CheckDepInstalled "lazarus lcl fp-utils fp-units-misc fp-units-gfx fp-units-gtk2 fp-units-db fp-units-math fp-units-net libssl-dev mariadb-server mariadb-client libmariadb-dev-compat"
+				cd cqrlog
+				if make -j4
+				then 
+					make DESTDIR=$HOME/cqrlog install
+        			cat > $HOME/.local/share/applications/cqrlog.desktop << EOF
 [Desktop Entry]
 Name=CQRLOG
 Encoding=UTF-8
@@ -1407,15 +1410,15 @@ Terminal=false
 Type=Application
 Categories=HamRadio;
 EOF
-            		sudo mv -f $HOME/.local/share/applications/cqrlog.desktop /usr/local/share/applications/
-	     				echo >&2 "============= cqrlog installed/updated ================="
-					else
-     					echo >&2 "============= cqrlog install failed ================="	
-     					cd $SRC_DIR
-     					rm -rf cqrlog
-     					SafeExit 1
-					fi
+           		sudo mv -f $HOME/.local/share/applications/cqrlog.desktop /usr/local/share/applications/
+	  				echo >&2 "============= $APP installed/updated ================="
+				else
+   				echo >&2 "============= $APP install failed ================="	
+   				cd $SRC_DIR
+   				rm -rf cqrlog
+   				SafeExit 1
 				fi
+			fi
 			;;
 
       *)
