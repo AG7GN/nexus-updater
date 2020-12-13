@@ -1435,11 +1435,11 @@ EOF
 				then 
         			cat > $HOME/.local/share/applications/gpredict.desktop << EOF
 [Desktop Entry]
-Name=CQRLOG
+Name=Gpredict
 Encoding=UTF-8
-GenericName=CQRLOG
-Comment=Ham Radio Logger
-Exec=gpredict
+GenericName=Gpredict
+Comment=Real-time satellite tracking and orbit prediction
+Exec=/usr/local/bin/gpredict
 Icon=/usr/share/pixmaps/CQ.png
 Terminal=false
 Type=Application
