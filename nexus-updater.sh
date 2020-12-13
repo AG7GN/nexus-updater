@@ -1295,7 +1295,7 @@ EOF
 					cd $SRC_DIR/$DIR_
 					autoreconf --install
 					./configure <<<"n"
-					if make
+					if make -j4
 					then 
 						sudo make install
 						sudo make installhelp
@@ -1386,7 +1386,7 @@ EOF
 				then
 					CheckDepInstalled "lazarus lcl fp-utils fp-units-misc fp-units-gfx fp-units-gtk2 fp-units-db fp-units-math fp-units-net libssl-dev mariadb-server mariadb-client libmariadb-dev-compat"
 					cd cqrlog
-					if make
+					if make -j4
 					then 
 						make DESTDIR=$HOME/cqrlog install
            			cat > $HOME/.local/share/applications/cqrlog.desktop << EOF
