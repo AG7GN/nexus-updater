@@ -1236,6 +1236,7 @@ EOF
      	   then # a version of linbpq is already installed
      	   	INSTALLED_VERSION="$($HOME/linbpq/linbpq -v | grep -i version)"
      	   	LATEST_VERSION="$(./pilinbpq -v | grep -i version)"
+        		echo >&2 "Latest version: $LATEST_VERSION   Installed version: $INSTALLED_VERSION"
 				if [[ $INSTALLED_VERSION == $LATEST_VERSION && $FORCE == $FALSE ]]
 				then # No need to update.  No further action needed for $APP
 					echo "============= $APP is installed and up to date ============="
@@ -1288,26 +1289,27 @@ EOF
 			;;
 			
 		uronode)
-				if (LocalRepoUpdate uronode "$URONODE_GIT_URL") || [[ $FORCE == $TRUE ]]
-				then
-					CheckDepInstalled "libax25"
-					DIR_="$(echo "$URONODE_GIT_URL" | cut -d' ' -f2)"
-					cd $SRC_DIR/$DIR_
-					autoreconf --install
-					./configure <<<"n"
-					if make -j4
-					then 
-						sudo make install
-						sudo make installhelp
-						sudo make installconf
-	     				echo >&2 "============= uronode installed/updated ================="
-					else
-     					echo >&2 "============= uronode install failed ================="	
-     					cd $SRC_DIR
-     					rm -rf $DIR_
-     					SafeExit 1
-					fi
+         echo "======== $APP install/upgrade was requested ========="
+			if (LocalRepoUpdate uronode "$URONODE_GIT_URL") || [[ $FORCE == $TRUE ]]
+			then
+				CheckDepInstalled "libax25"
+				DIR_="$(echo "$URONODE_GIT_URL" | cut -d' ' -f2)"
+				cd $SRC_DIR/$DIR_
+				autoreconf --install
+				./configure <<<"n"
+				if make -j4
+				then 
+					sudo make install
+					sudo make installhelp
+					sudo make installconf
+     				echo >&2 "============= $APP installed/updated ================="
+				else
+  					echo >&2 "============= $APP install failed ================="	
+  					cd $SRC_DIR
+  					rm -rf $DIR_
+  					SafeExit 1
 				fi
+			fi
 			;;
 
       yaac)
@@ -1336,27 +1338,29 @@ Categories=HamRadio;
 EOF
 				sudo mv -f $HOME/.local/share/applications/YAAC.desktop /usr/local/share/applications/
 			fi
-			echo >&2 "============= yaac installed/updated ================="
+			echo >&2 "============= $APP installed/updated ================="
 			;;
 
 		qsstv)
          echo "======== $APP install/upgrade was requested ========="
          TAR_FILE="$(wget -q -O - $QSSTV_URL | egrep -o 'href="qsstv_.*.tar.gz"' | cut -d'"' -f2)"
-         CV_=${TAR_FILE%.tar.gz}
-         CURRENT_VERSION=${CV_#*_}
-         INSTALLED_VERSION=         
 			[[ $TAR_FILE == "" ]] && { echo >&2 "======= Download failed.  Could not find tar file URL ========"; SafeExit 1; }
-         CheckDepInstalled "qt5-qmake g++ libfftw3-dev qt5-default libpulse-dev libasound2-dev libv4l-dev libopenjp2-7-dev"
-         InstallHamlib
-         mkdir -p qsstv
-         cd qsstv        
-         echo >&2 "=========== Retrieving $APP from $QSSTV_URL/$TAR_FILE ==========="
-         wget -q -O $TAR_FILE $QSSTV_URL/$TAR_FILE || { echo >&2 "======= $QSSTV_URL/$TAR_FILE download failed with $? ========"; SafeExit 1; }
-         tar xzvf $TAR_FILE
-         cd ${TAR_FILE%.tar.gz}
-         if qmake -qt=qt5 && make -j4 && sudo make install
+         LATEST_VERSION_=${TAR_FILE%.tar.gz}
+         INSTALLED_VERSION_="$(stat -c %n qsstv/qsstv_*.tar.gz 2>/dev/null)"
+        	echo >&2 "Latest version: $LATEST_VERSION   Installed version: $INSTALLED_VERSION"
+         if [[ $LATEST_VERSION != $INSTALLED_VERSION ]] || [[ $FORCE == $TRUE ]]
          then
-           	cat > $HOME/.local/share/applications/qsstv.desktop << EOF
+         	CheckDepInstalled "qt5-qmake g++ libfftw3-dev qt5-default libpulse-dev libasound2-dev libv4l-dev libopenjp2-7-dev"
+         	InstallHamlib
+         	mkdir -p qsstv
+         	cd qsstv        
+         	echo >&2 "=========== Retrieving $APP from $QSSTV_URL/$TAR_FILE ==========="
+         	wget -q -O $TAR_FILE $QSSTV_URL/$TAR_FILE || { echo >&2 "======= $QSSTV_URL/$TAR_FILE download failed with $? ========"; SafeExit 1; }
+         	tar xzvf $TAR_FILE
+         	cd ${TAR_FILE%.tar.gz}
+         	if qmake -qt=qt5 && make -j4 && sudo make install
+         	then
+           		cat > $HOME/.local/share/applications/qsstv.desktop << EOF
 [Desktop Entry]
 Name=QSSTV
 Encoding=UTF-8
@@ -1369,15 +1373,16 @@ Type=Application
 Categories=HamRadio;
 EOF
             	sudo mv -f $HOME/.local/share/applications/qsstv.desktop /usr/local/share/applications/
-				echo >&2 "============= qsstv installed/updated ================="
-				cd $SRC_DIR
-				rm -rf qsstv/${TAR_FILE%.tar.gz}
-				rm qsstv/$TAR_FILE
-         else
-				echo >&2 "============= qsstv install failed ================="	
-				cd $SRC_DIR
-				rm -rf qsstv
-				SafeExit 1
+					echo >&2 "============= $APP installed/updated ================="
+					cd $SRC_DIR
+					rm -rf qsstv/${TAR_FILE%.tar.gz}
+         	else
+					echo >&2 "============= $APP install failed ================="	
+					cd $SRC_DIR
+					rm -rf qsstv
+					SafeExit 1
+			else
+				echo "============= $APP is installed and up to date ============="			
          fi
          ;;
          
