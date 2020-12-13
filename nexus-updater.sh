@@ -515,6 +515,7 @@ function Help () {
 	APPS[yaac]="https://www.ka2ddo.org/ka2ddo/YAAC.html"
 	APPS[qsstv]="http://users.telenet.be/on4qz/index.html"
 	APPS[cqrlog]="https://www.cqrlog.com"
+	APPS[gpredict]="http://gpredict.oz9aec.net/index.php"
 	APP="$2"
 	$BROWSER ${APPS[$APP]} 2>/dev/null &
 }
@@ -575,7 +576,8 @@ LINPAC_GIT_URL="https://git.code.sf.net/p/linpac/linpac"
 URONODE_GIT_URL="https://git.code.sf.net/p/uronode/git uronode-git"
 YAAC_URL="https://www.ka2ddo.org/ka2ddo/YAAC.zip"
 QSSTV_URL="http://users.telenet.be/on4qz/qsstv/downloads"
-CQRLOG_GIT_URL="https://github.com/ok2cqr/cqrlog.git"
+CQRLOG_GIT_URL="$GITHUB_URL/ok2cqr/cqrlog.git"
+GPREDICT_GIT_URL="$GITHUB_URL/csete/gpredict.git"
 REBOOT="NO"
 #SRC_DIR="/usr/local/src/nexus"
 #SHARE_DIR="/usr/local/share/nexus"
@@ -590,7 +592,7 @@ FLDIGI_DEPS_INSTALLED=$FALSE
 SWAP_FILE="/etc/dphys-swapfile"
 SWAP="$(grep "^CONF_SWAPSIZE" $SWAP_FILE | cut -d= -f2)"
 
-LIST="raspbian 710 arim autohotspot chirp cqrlog direwolf flamp fldigi flmsg flrig flwrap hamlib js8call linbpq linpac nexus-backup-restore nexus-iptables nexus-rmsgw nexus-updater nexus-utilities pat piardop pmon qsstv uronode wsjtx yaac xastir"
+LIST="raspbian 710 arim autohotspot chirp cqrlog direwolf flamp fldigi flmsg flrig flwrap gredict hamlib js8call linbpq linpac nexus-backup-restore nexus-iptables nexus-rmsgw nexus-updater nexus-utilities pat piardop pmon qsstv uronode wsjtx yaac xastir"
 declare -A DESC
 DESC[raspbian]="Raspbian OS and Apps"
 DESC[710]="Rig Control Scripts for Kenwood 710/71A"
@@ -621,6 +623,7 @@ DESC[yaac]="Yet Another APRS Client"
 DESC[xastir]="APRS Tracking and Mapping Utility"
 DESC[qsstv]="Receiving and transmitting SSTV/DSSTV"
 DESC[cqrlog]="Ham radio logger"
+DESC[gpredict]="Real time satellite tracking"
 
 
 #============================
@@ -1416,6 +1419,38 @@ EOF
    				echo >&2 "============= $APP install failed ================="	
    				cd $SRC_DIR
    				rm -rf cqrlog
+   				SafeExit 1
+				fi
+			fi
+			;;
+
+      gpredict)
+	      echo "======== $APP install/upgrade was requested ========="
+			if (LocalRepoUpdate cqrlog "$GPREDICT_GIT_URL") || [[ $FORCE == $TRUE ]]
+			then
+				CheckDepInstalled "libtool intltool autoconf automake libcurl4-openssl-dev pkg-config libglib2.0-dev libgtk-3-dev libgoocanvas-2.0-dev"
+				cd gpredict
+				./autogen.sh
+				if make -j4 && sudo make install
+				then 
+        			cat > $HOME/.local/share/applications/gpredict.desktop << EOF
+[Desktop Entry]
+Name=CQRLOG
+Encoding=UTF-8
+GenericName=CQRLOG
+Comment=Ham Radio Logger
+Exec=gpredict
+Icon=/usr/share/pixmaps/CQ.png
+Terminal=false
+Type=Application
+Categories=HamRadio;
+EOF
+           		sudo mv -f $HOME/.local/share/applications/gpredict.desktop /usr/local/share/applications/
+	  				echo >&2 "============= $APP installed/updated ================="
+				else
+   				echo >&2 "============= $APP install failed ================="	
+   				cd $SRC_DIR
+   				rm -rf gpredict
    				SafeExit 1
 				fi
 			fi
