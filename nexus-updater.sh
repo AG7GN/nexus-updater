@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.13
+#-    version         ${SCRIPT_NAME} 2.0.14
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -1169,6 +1169,7 @@ EOF
 			cd ..
 			rm -f $CHIRP_TAR_FILE
 			sudo rm -rf $CHIRP_DIR
+			sudo sed -i -e "s/Utility;//" /usr/local/share/applications/chirp.desktop 2>/dev/null
         	echo "============= $APP installed/updated ================"
 			;;
 
