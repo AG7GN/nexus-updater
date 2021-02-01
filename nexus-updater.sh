@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.15
+#-    version         ${SCRIPT_NAME} 2.0.16
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -169,6 +169,7 @@ function LocalRepoUpdate() {
 		git clone $URL || { echo >&2 "======= git clone $URL failed ========"; SafeExit 1; }
 	else  # See if local repo is up to date
 		cd $GIT_DIR
+		git reset --hard
 		if git pull | tee /dev/stderr | grep -q "^Already"
 		then
 			echo "============= $REQUEST up to date ============="
