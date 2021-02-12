@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.16
+#-    version         ${SCRIPT_NAME} 2.0.17
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -1221,7 +1221,7 @@ EOF
          cd $APP
 			wget -q $URL || { echo >&2 "======= $URL download failed with $? ========"; SafeExit 1; }
          echo >&2 "=========== Installing $APP ==========="
-         CheckDepInstalled "libgfortran3 libqt5multimedia5-plugins libqt5serialport5 libqt5sql5-sqlite libfftw3-single3"    
+         CheckDepInstalled "libgfortran3 libqt5multimedia5-plugins libqt5serialport5 libqt5sql5-sqlite libfftw3-single3 libboost-chrono1.67.0 libboost-date-time1.67.0 libboost-filesystem1.67.0 libboost-log1.67.0"    
 			[[ ! -z $INSTALLED_VERSION ]] && (sudo apt remove -y $APP || AptError "sudo apt remove -y $APP")
          sudo dpkg -i ${PKG##*/} || { echo >&2 "======= ${PKG##*/} install failed with $? ========"; SafeExit 1; }
          sudo sed -i 's/AudioVideo;Audio;//' /usr/share/applications/$APP.desktop /usr/share/applications/message_aggregator.desktop 2>/dev/null
