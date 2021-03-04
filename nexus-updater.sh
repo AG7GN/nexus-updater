@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.17
+#-    version         ${SCRIPT_NAME} 2.0.18
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -1349,7 +1349,7 @@ EOF
 
 		qsstv)
          echo "======== $APP install/upgrade was requested ========="
-         TAR_FILE="$(wget -q -O - $QSSTV_URL | egrep -o 'href="qsstv_.*.tar.gz"' | cut -d'"' -f2)"
+         TAR_FILE="$(wget -q -O - $QSSTV_URL | egrep -o 'href="qsstv_.*.tar.gz"' | tail -1 | cut -d'"' -f2)"
 			[[ $TAR_FILE == "" ]] && { echo >&2 "======= Download failed.  Could not find tar file URL ========"; SafeExit 1; }
          LATEST_VERSION="qsstv/${TAR_FILE}"
          INSTALLED_VERSION="$(stat -c %n qsstv/qsstv_*.tar.gz 2>/dev/null)"
@@ -1363,17 +1363,21 @@ EOF
          	echo >&2 "=========== Retrieving $APP from $QSSTV_URL/$TAR_FILE ==========="
          	wget -q -O $TAR_FILE $QSSTV_URL/$TAR_FILE || { echo >&2 "======= $QSSTV_URL/$TAR_FILE download failed with $? ========"; SafeExit 1; }
          	tar xzvf $TAR_FILE
-         	cd ${TAR_FILE%.tar.gz}
+         	#cd ${TAR_FILE%.tar.gz}
+         	cd $(ls -td */ | head -1)
       		AdjustSwap 2048
          	if qmake -qt=qt5 && make -j4 && sudo make install
          	then
+         		# Locate the binary
+         		QSSTV_BIN="$(egrep -m1 ^QMAKE_TARGET Makefile | tr -d ' ' | cut -d'=' -f2)"
+         		QSSTV_PATH="$(sudo find / -type f -name $QSSTV_BIN ! -path '/usr/local/src/nexus/*' 2>/dev/null)"
            		cat > $HOME/.local/share/applications/qsstv.desktop << EOF
 [Desktop Entry]
 Name=QSSTV
 Encoding=UTF-8
 GenericName=QSSTV
 Comment=Slow Scan TV
-Exec=sh -c 'PULSE_SINK=fepi-playback PULSE_SOURCE=fepi-capture qsstv'
+Exec=sh -c "PULSE_SINK=fepi-playback PULSE_SOURCE=fepi-capture $QSSTV_PATH"
 Icon=/usr/share/pixmaps/CQ.png
 Terminal=false
 Type=Application
@@ -1382,7 +1386,8 @@ EOF
             	sudo mv -f $HOME/.local/share/applications/qsstv.desktop /usr/local/share/applications/
 					echo >&2 "============= $APP installed/updated ================="
 					cd $SRC_DIR
-					rm -rf qsstv/${TAR_FILE%.tar.gz}
+					#rm -rf qsstv/${TAR_FILE%.tar.gz}
+					rm -rf $(ls -td qsstv/*/ | head -1)
          	else
 					echo >&2 "============= $APP install failed ================="	
 					cd $SRC_DIR
