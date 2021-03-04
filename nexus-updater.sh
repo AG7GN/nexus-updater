@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.18
+#-    version         ${SCRIPT_NAME} 2.0.19
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -1386,6 +1386,7 @@ EOF
             	sudo mv -f $HOME/.local/share/applications/qsstv.desktop /usr/local/share/applications/
 					echo >&2 "============= $APP installed/updated ================="
 					cd $SRC_DIR
+					rm -f $INSTALLED_VERSION
 					#rm -rf qsstv/${TAR_FILE%.tar.gz}
 					rm -rf $(ls -td qsstv/*/ | head -1)
          	else
