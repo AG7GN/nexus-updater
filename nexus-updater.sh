@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.19
+#-    version         ${SCRIPT_NAME} 2.0.20
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -890,7 +890,7 @@ do
       	;;
 
       nexus-utilities)
-      	CheckDepInstalled "imagemagick"
+      	CheckDepInstalled "imagemagick socat wmctrl"
       	NexusLocalRepoUpdate nexus-utilities $NEXUSUTILS_GIT_URL
       	;;
 
