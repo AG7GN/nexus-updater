@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.21
+#-    version         ${SCRIPT_NAME} 2.0.22
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -1365,6 +1365,20 @@ EOF
          	tar xzvf $TAR_FILE
          	#cd ${TAR_FILE%.tar.gz}
          	cd $(ls -td */ | head -1)
+         	# Add missing #define MAXCONFLEN 128 and #define FILPATHLEN 512 in
+         	# rig/rigcontrol.cpp to work around a hamlib compatibility problem
+         	FILE_TO_FIX="rig/rigcontrol.cpp"
+         	FIXED_FILE="rig/rigcontrol.cpp.fixed"
+         	if ! grep -q "^#define MAXCONFLEN 128" $FILE_TO_FIX
+         	then
+         		awk 'FNR==NR{ if (/^#include/) p=NR; next} 1; FNR==p{ print "#define MAXCONFLEN 128" }' $FILE_TO_FIX $FILE_TO_FIX > $FIXED_FILE
+         		mv $FIXED_FILE $FILE_TO_FIX
+				fi
+         	if ! grep -q "^#define FILPATHLEN 512" $FILE_TO_FIX
+         	then
+         		awk 'FNR==NR{ if (/^#define MAXCONFLEN 128/) p=NR; next} 1; FNR==p{ print "#define FILPATHLEN 512" }' $FILE_TO_FIX $FILE_TO_FIX > $FIXED_FILE
+         		mv $FIXED_FILE $FILE_TO_FIX
+				fi
       		AdjustSwap 2048
          	if qmake -qt=qt5 && make -j4 && sudo make install
          	then
