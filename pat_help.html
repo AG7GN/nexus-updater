@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>pat Installation/Upgrade Help</title>
+	</head>
+	<body>
+		<h1>pat Installation/Upgrade Help</h1>
+		<hr>
+		<h2>Released Version vs. "With Forms" Version</h2>
+		<p>
+pat is currently available via 2 releases. The released "production" version has no support for forms. A separate version of pat that supports Winlink Forms handling is also available. It uses the same forms as the Winlink Express Windows program.
+		</p>
+		<p>
+If you currently have the released version of pat installed and you select "pat with forms", the released version will be replaced with the "with forms" version. Likewise, if you have the "with forms" version installed and you select the released version, the released version will replace the "with forms" version. In either case, your configuration settings and any messages you have stored on this Pi will be retained.
+		</p>
+		<h2>"pat With Forms" Information</h2>
+		<p>
+The "with forms" version designates folder <b>$HOME/.wl2k/Standard_Forms</b> as the location in which the Winlink forms will be stored. This folder will automatically be created if it doesn't already exist.
+		</p>
+Once "pat with forms" is installed, follow these steps to download/update the <a href="https://winlink.org/WinlinkExpressForms">winlink.org</a> forms to this Pi:
+		<br />
+		<ol>
+			<li>Click <b>Raspberry > Hamradio > Direwolf TNC and pat GUI</b> to start Direwolf and pat.</li> 
+			<li>Use the <b>Configure</b> tabs to configure Direwolf and pat as desired. 
+			<ul>
+				<li>Make sure you've checked <b>Start pat web service when Direwolf TNC starts</b> in the <b>Configure pat</b> tab.</li>
+				<li>Click <b>Saves Settings and Restart Direwolf + pat</b> if you've made and changes.</li>
+			</ul>
+			<li>Click <b>Open pat Web interface</b>.</li>
+			<li>In the pat web interface, click <b>Action</b>, then <b>Update Form Templates</b>.</li>
+		</ol>
+		<hr>
+	</body>
+</html>
+

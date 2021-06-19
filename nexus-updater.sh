@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.22
+#-    version         ${SCRIPT_NAME} 2.0.23
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -139,6 +139,26 @@ function PiModel() {
          echo ""
          ;;
    esac
+}
+
+
+function getGoogleFile () {
+   local FILE_NAME="$1"
+   local FILE_ID="$2"
+   COOKIES="/$TMPDIR/cookies.txt"
+   WGET="$(command -v wget)"
+   WGET_OPTIONS="--quiet --save-cookies $COOKIES --keep-session-cookies --no-check-certificate"
+   CONFIRM="$($WGET $WGET_OPTIONS "https://docs.google.com/uc?export=download&id=$FILE_ID" -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=$FILE_ID"
+   if (( $? == 0 ))
+   then
+      WGET_OPTIONS="--quiet --no-check-certificate --load-cookies $COOKIES"
+      $WGET $WGET_OPTIONS "https://docs.google.com/uc?export=download&confirm=$CONFIRM" -O "$FILE_NAME"
+      (( $? == 0 )) && RESULT=0 || RESULT=1
+   else
+      RESULT=1
+   fi
+   rm -f $COOKIES
+   return $RESULT
 }
 
 
@@ -454,7 +474,7 @@ function GenerateList () {
 				else
 					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
 				fi
-				;;    
+				;;
 			*)
 		   	if command -v $A 1>/dev/null 2>&1 
 				then
@@ -482,7 +502,42 @@ This Pi must be connected to the Internet for this script to work.\n\n \
 --separator="," --checklist --grid-lines=hor \
 --dclick-action="bash -c \"Help %s\"" \
 --auto-kill --column Pick --column Applications --column Description \
---column Action < "$TFILE" --buttons-layout=center --button=Cancel:1 --button="$1 All Installed":2 --button=OK:0)"
+--column Action < "$TFILE" --buttons-layout=center --button='<b>Cancel</b>':1 --button="<b>$1 All Installed</b>":2 --button='<b>OK</b>':0)"
+}
+
+function patChooser () {
+	local INSTALLED_VERSION="$(pat version 2>/dev/null)"
+	local STATUS="$TMPDIR/pat.status"
+	cat > $TMPDIR/pat_web.sh <<EOF
+xdg-open http://$HOSTNAME.local:$PAT_HTTP_PORT >/dev/null 2>&1
+EOF
+	if [[ $INSTALLED_VERSION =~ $PAT_WITH_FORMS_RELEASE ]]
+	then
+		echo -e "FALSE\npat (released version)\nNot Installed\nTRUE\npat with forms (BETA unreleased)\nInstalled - Check for Updates" > $STATUS
+	elif [[ $INSTALLED_VERSION == "" ]]
+	then
+		echo -e "TRUE\npat (released version)\nNot installed\nFALSE\npat with forms (BETA unreleased)\nNot installed" > $STATUS
+	else
+		echo -e "TRUE\npat (released version)\nInstalled - Check for Updates\nFALSE\npat with forms (BETA unreleased)\nNot installed" > $STATUS
+	fi 
+	PAT_ANS="$(yad --center --title="$TITLE" --on-top --list \
+	--borders=10 --text-align=center --radiolist --grid-lines=hor --auto-kill \
+	--text "<span color='blue'><b>Select pat release to install/update</b></span>\nYour selection will replace any installed version, but your configuration will be preserved" \
+   --column Pick:RD --column 'Pat Release':TEXT --column Status:TEXT < "$STATUS" \
+   --buttons-layout=center \
+   --button='<b>Help me decide</b>':"bash -c 'xdg-open /usr/local/share/nexus/pat_help.html'" \
+   --button='<b>Cancel</b> (no pat changes)':1 \
+   --button='<b>OK</b>':0 )"
+   local RESULT=$?
+	case $RESULT in
+		0)
+			local SELECTION="$(echo "$PAT_ANS" | grep "^TRUE" | cut -d, -f2)"
+			[[ $SELECTION =~ forms ]] && echo "pat-with-forms" || echo "pat"
+			;;
+		*)
+			echo ""
+			;;
+	esac		
 }
 
 
@@ -560,6 +615,9 @@ GARIM_URL="https://www.whitemesa.net/garim/garim.html"
 PIARDOP_URL="http://www.cantab.net/users/john.wiseman/Downloads/Beta/piardopc"
 PIARDOP2_URL="http://www.cantab.net/users/john.wiseman/Downloads/Beta/piardop2"
 PAT_GIT_URL="$GITHUB_URL/la5nta/pat/releases"
+PAT_WITH_FORMS_FILE_ID="12ZQQJzft3R-LaEJyJEW25vVGs1COyCAa"
+PAT_WITH_FORMS_FILE_NAME="pat_f4c2768_rpi_armhf.deb"
+PAT_WITH_FORMS_RELEASE="$(echo $PAT_WITH_FORMS_FILE_NAME | cut -d'_' -f2)"
 CHIRP_URL="https://trac.chirp.danplanet.com/chirp_daily/LATEST"
 NEXUS_UPDATER_GIT_URL="$GITHUB_URL/AG7GN/nexus-updater"
 NEXUSUTILS_GIT_URL="$GITHUB_URL/AG7GN/nexus-utilities"
@@ -719,6 +777,9 @@ do
 done
 shift $((${OPTIND} - 1)) ## shift options
 
+export click_pat_help_cmd='bash -c "xdg-open /usr/local/share/nexus/pat_help.html"'
+
+
 #============================
 #  MAIN SCRIPT
 #============================
@@ -833,11 +894,24 @@ then
    	echo "Update Cancelled"
    	SafeExit 0
 	else
-		APP_LIST="$(echo "$ANS" | grep "^TRUE" | cut -d, -f2 | tr '\n' ',' | sed 's/,$//')"
+		#APP_LIST="$(echo "$ANS" | grep "^TRUE" | cut -d, -f2 | tr '\n' ',' | sed 's/,$//')"
+		APP_LIST="$(echo "$ANS" | grep "^TRUE" | cut -d, -f2)"
 		if [ ! -z "$APP_LIST" ]
 		then
-      	echo "Update/install list: $APP_LIST..."
-      	if $0 $APP_LIST
+      	if echo "$APP_LIST" | grep -q "^pat"
+      	then
+      		PAT_SELECTION="$(patChooser)"
+      		if [[ "$PAT_SELECTION" =~ pat ]]
+      		then
+      			APP_LIST="$(echo "$APP_LIST" | sed "s/^pat/$PAT_SELECTION/")"
+      		else
+      			APP_LIST="$(echo "$APP_LIST" | grep -v "^pat")"
+      		fi
+      	fi
+			APP_STRING="$(echo "$APP_LIST" | tr '\n' ',' | sed 's/,$//')"
+      	echo "Update/install list: $APP_LIST..."    	
+      	[[ -z $APP_STRING ]] && { echo "Update Cancelled"; SafeExit 0; }
+      	if $0 $APP_STRING
       	then
       		yad --center --title="$TITLE" --info --borders=30 \
     				--no-wrap --text-align=center --text="<b>Finished.</b>\n\n" \
@@ -1124,7 +1198,7 @@ EOF
         	INSTALLED_VERSION="$(InstalledPkgVersion pat)"
         	LATEST_VERSION="$(echo $PAT_FILE | cut -d '_' -f2)"
         	echo >&2 "Latest version: $LATEST_VERSION   Installed version: $INSTALLED_VERSION"
-        	if [[ $INSTALLED_VERSION == $LATEST_VERSION && $FORCE == $FALSE ]]
+        	if [[ $INSTALLED_VERSION == $LATEST_VERSION && ! ("$(pat version 2>/dev/null)" =~ $PAT_WITH_FORMS_RELEASE) && $FORCE == $FALSE ]]
         	then
         		echo >&2 "============= $APP installed and up to date ============="
 				continue
@@ -1136,6 +1210,38 @@ EOF
          [ -s "$APP/$PAT_FILE" ] || { echo >&2 "======= $PAT_FILE is empty ========"; SafeExit 1; }
          sudo dpkg -i $APP/$PAT_FILE || { echo >&2 "======= pat installation failed with $? ========"; SafeExit 1; }
          echo "============= $APP installed/updated ============="
+			;;
+
+		pat-with-forms)
+         echo "============= $APP installation requested ============="
+			INSTALLED_VERSION="$(pat version 2>/dev/null)"
+			if [[ $INSTALLED_VERSION =~ $PAT_WITH_FORMS_RELEASE && $FORCE == $FALSE ]]	
+        	then
+        		echo >&2 "============= $APP installed and up to date ============="
+				continue
+			fi
+			# Install or update needed. Get and install the package
+			mkdir -p $APP
+			rm -f $APP/*
+			if ! getGoogleFile "${APP}/${PAT_WITH_FORMS_FILE_NAME}" "$PAT_WITH_FORMS_FILE_ID"
+			then
+         	echo >&2 "======= $APP installation failed. Could not download ${PAT_WITH_FORMS_FILE_NAME}"
+         	SafeExit 1
+			fi
+			PAT_DIR="$HOME/.wl2k"
+			PAT_CONFIG="$PAT_DIR/config.json"
+			[[ -s "$PAT_CONFIG" ]] && cp -f "$PAT_CONFIG" "$TMPDIR/config.json"
+			sudo dpkg -i ${APP}/${PAT_WITH_FORMS_FILE_NAME} || { echo >&2 "======= $APP installation failed with $? ========"; SafeExit 1; }
+			mkdir -p "$PAT_DIR/Standard_Forms"
+			[[ -s "$TMPDIR/config.json" ]] && cp -f "$TMPDIR/config.json" "$PAT_CONFIG"
+			FORMS_PATH="$(jq .forms_path "$PAT_CONFIG")"
+			if [[ "$FORMS_PATH" == "null" ]]
+			then
+				jq --arg forms_path "$PAT_DIR/Standard_Forms" '. + {forms_path: $forms_path}' $PAT_CONFIG > $TMPDIR/config.json
+				cp -f $PAT_CONFIG $PAT_CONFIG.backup
+				mv -f $TMPDIR/config.json $PAT_CONFIG
+			fi
+        	echo "============= $APP installed/updated ============="	
 			;;
 
       autohotspot)
