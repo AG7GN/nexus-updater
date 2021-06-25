@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.1
+#-    version         ${SCRIPT_NAME} 2.1.2
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -316,7 +316,9 @@ function InstallHamlib () {
 		# Check the version of Hamlib that was not installed via a package. Compare
 		# it's SHA value to that of the latest available stable version on GitHub.
 		INSTALLED_VERSION_SHA="$(rigctl -V | cut -d'=' -f2)"
-		if [[ $INSTALLED_VERSION_SHA != "" ]] && [[ $FORCE != $TRUE ]] && wget -qO - $HAMLIB_LATEST_URL | grep -q "<code>$INSTALLED_VERSION_SHA"
+		if [[ $INSTALLED_VERSION_SHA != "" ]] && \
+			[[ $FORCE != $TRUE ]] && \
+			wget -qO - $HAMLIB_LATEST_URL | grep -q "<code>$INSTALLED_VERSION_SHA"
 		then
 			echo "============= Hamlib up to date ============="
 			return 0
@@ -354,20 +356,20 @@ function InstallHamlib () {
 				rm -rf "$HAMLIB_DIR/hamlib"
 				mv "$HAMLIB_LATEST_DIR" "$HAMLIB_DIR/hamlib"
 				sudo apt-mark hold libhamlib2 libhamlib-dev libhamlib-utils
-				echo "========= $APP installed  =========="
+				echo "========= Hamlib installed  =========="
 				RESULT=0
 			else
-				echo "========= $APP make install failed  =========="
+				echo "========= Hamlib make install failed  =========="
 				RESULT=1
 			fi
 		else
-			echo "========= $APP configure/make failed  =========="
+			echo "========= Hamlib configure/make failed  =========="
 			RESULT=1
 		fi
 		rm -f "$HAMLIB_DIR/$HAMLIB_TAR"
 		rm -rf "$HAMLIB_LATEST_DIR"
 	else
-		echo "========= $APP download failed  =========="
+		echo "========= Hamlib download failed  =========="
 		RESULT=1
 	fi
 	cd "$PREVIOUS_DIR"
