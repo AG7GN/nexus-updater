@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.0.23
+#-    version         ${SCRIPT_NAME} 2.1.1
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -143,16 +143,18 @@ function PiModel() {
 
 
 function getGoogleFile () {
+   local RESULT=1
    local FILE_NAME="$1"
    local FILE_ID="$2"
-   COOKIES="/$TMPDIR/cookies.txt"
+   local BASE_URL="https://docs.google.com/uc?export=download"
+   COOKIES="$TMPDIR/cookies.txt"
    WGET="$(command -v wget)"
    WGET_OPTIONS="--quiet --save-cookies $COOKIES --keep-session-cookies --no-check-certificate"
-   CONFIRM="$($WGET $WGET_OPTIONS "https://docs.google.com/uc?export=download&id=$FILE_ID" -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=$FILE_ID"
+   CONFIRM="$($WGET $WGET_OPTIONS "${BASE_URL}&id=$FILE_ID" -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=$FILE_ID"
    if (( $? == 0 ))
    then
       WGET_OPTIONS="--quiet --no-check-certificate --load-cookies $COOKIES"
-      $WGET $WGET_OPTIONS "https://docs.google.com/uc?export=download&confirm=$CONFIRM" -O "$FILE_NAME"
+      $WGET $WGET_OPTIONS "${BASE_URL}&confirm=$CONFIRM" -O "$FILE_NAME"
       (( $? == 0 )) && RESULT=0 || RESULT=1
    else
       RESULT=1
@@ -288,12 +290,18 @@ function CheckDepInstalled() {
 
 
 function InstallHamlib () {
+	PREVIOUS_DIR="$(pwd)"
+	echo "========= Hamlib install/update requested  =========="
+	local INSTALLED_VERSION_SHA=""
 	if command -v rigctl >/dev/null 2>&1
-	then  # Hamlib installed
-		if dpkg -l libhamlib2 >/dev/null 2>&1
-		then  # Hamlib installed via apt. Remove it.
+	then  # Hamlib is already installed
+		# Is it the default Debian package?
+	   local HAMLIB_PKG="$(InstalledPkgVersion libhamlib2)"
+		if [[ ! -z $HAMLIB_PKG ]]
+		then  # Default Debian package installed. Remove it and make sure
+		   # we don't install it again.
 			sudo apt -y remove --purge libhamlib2 libhamlib-dev libhamlib-utils*
-			#sudo apt-mark hold libhamlib-dev
+			sudo apt-mark hold libhamlib2 libhamlib-dev libhamlib-utils
 			echo
 			echo
 			echo
@@ -305,16 +313,74 @@ function InstallHamlib () {
 			echo
 			echo
 		fi
+		# Check the version of Hamlib that was not installed via a package. Compare
+		# it's SHA value to that of the latest available stable version on GitHub.
+		INSTALLED_VERSION_SHA="$(rigctl -V | cut -d'=' -f2)"
+		if [[ $INSTALLED_VERSION_SHA != "" ]] && [[ $FORCE != $TRUE ]] && wget -qO - $HAMLIB_LATEST_URL | grep -q "<code>$INSTALLED_VERSION_SHA"
+		then
+			echo "============= Hamlib up to date ============="
+			return 0
+		fi
 	fi
-	if LocalRepoUpdate Hamlib $HAMLIB_GIT_URL
-	then
-		cd $SRC_DIR/Hamlib
-		autoreconf -f -i
-		./configure && make && sudo make install
-		sudo ldconfig
-		cd -
-		sudo apt-mark hold libhamlib2 libhamlib-dev libhamlib-utils
+	local RESULT=0
+	local HAMLIB_DOWNLOAD_URL="$(wget -qO - "$HAMLIB_LATEST_URL" | grep -m1 "download.*hamlib.*.tar.gz" | grep -Eoi '<a [^>]+>' | grep -Eo 'href="[^\"]+"' | cut -d'"' -f2)"
+	if [[ $HAMLIB_DOWNLOAD_URL =~ amlib ]]
+	then  # Download URL looks valid.
+		local HAMLIB_DOWNLOAD_URL="${GITHUB_URL}$HAMLIB_DOWNLOAD_URL"
+		local HAMLIB_TAR="${HAMLIB_DOWNLOAD_URL##*/}"
+		local HAMLIB_DIR="$SRC_DIR/hamlib"
+		if [[ -d "$SRC_DIR/Hamlib" && "$(ls -A $SRC_DIR/Hamlib)" ]]
+		then
+			cd "$SRC_DIR/Hamlib"
+			sudo make uninstall
+			cd "$PREVIOUS_DIR"
+			rm -rf "$SRC_DIR/Hamlib"
+		fi
+		mkdir -p "$HAMLIB_DIR"
+		wget -qO "$HAMLIB_DIR/$HAMLIB_TAR" "$HAMLIB_DOWNLOAD_URL"
+		tar -xzf "$HAMLIB_DIR/$HAMLIB_TAR" -C "${HAMLIB_DIR}/"
+		local HAMLIB_LATEST_DIR="${HAMLIB_DIR}/$(basename "$HAMLIB_TAR" .tar.gz)"
+		cd "$HAMLIB_LATEST_DIR"
+		#autoreconf -f -i || { echo >&2 "======= autoreconf -f -i failed ========"; return 1; }
+		if ./configure && make -j4
+		then
+	   	#for HAMLIB_BIN in rigctl rigctld rigmem rigsmtr rigswr rotctl rotctld rigctlcom ampctl ampctld
+	   	#do
+	   	#	sudo rm -f /usr/local/bin/$HAMLIB_BIN
+	   	#done
+			if sudo make install
+			then
+				sudo ldconfig
+				rm -rf "$HAMLIB_DIR/hamlib"
+				mv "$HAMLIB_LATEST_DIR" "$HAMLIB_DIR/hamlib"
+				sudo apt-mark hold libhamlib2 libhamlib-dev libhamlib-utils
+				echo "========= $APP installed  =========="
+				RESULT=0
+			else
+				echo "========= $APP make install failed  =========="
+				RESULT=1
+			fi
+		else
+			echo "========= $APP configure/make failed  =========="
+			RESULT=1
+		fi
+		rm -f "$HAMLIB_DIR/$HAMLIB_TAR"
+		rm -rf "$HAMLIB_LATEST_DIR"
+	else
+		echo "========= $APP download failed  =========="
+		RESULT=1
 	fi
+	cd "$PREVIOUS_DIR"
+	return $RESULT
+	#if LocalRepoUpdate Hamlib $HAMLIB_GIT_URL
+	#then
+	#	cd $SRC_DIR/Hamlib
+	#	autoreconf -f -i
+	#	./configure && make && sudo make install
+	#	sudo ldconfig
+	#	cd -
+	#	sudo apt-mark hold libhamlib2 libhamlib-dev libhamlib-utils
+	#fi
 }
 
 
@@ -675,7 +741,8 @@ DESC[js8call]="Weak signal keyboard to keyboard messaging using JS8"
 DESC[linpac]="AX.25 keyboard to keyboard chat and PBBS"
 DESC[linbpq]="G8BPQ AX25 Networking Package"
 DESC[pat]="Winlink Email Client"
-DESC[piardop]="Amateur Radio Digital Open Protocol Modem Versions 1&#x26;2"
+DESC[pat-with-forms]="BETA - pat with Winlink Forms support"
+DESC[piardop]="Amateur Radio Digital Open Protocol Modem Versions 1 and 2"
 DESC[pmon]="PACTOR Monitoring Utility"
 DESC[uronode]="Node front end for AX.25, NET/ROM, Rose and TCP"
 DESC[wsjtx]="Weak Signal Modes Modem"
@@ -999,7 +1066,7 @@ do
 					sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list
 					sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list.d/raspi.list
 					#sudo apt update || AptError "sudo apt update"
-					InstallHamlib
+					InstallHamlib || { echo "=== $APP install not attempted ==="; continue; }
 					CheckDepInstalled "asciidoc asciidoc-base asciidoc-common autopoint debhelper dh-autoreconf dh-strip-nondeterminism docbook-xsl dwz gettext intltool-debian libarchive-zip-perl libasound2 libblkid-dev libc6 libffi-dev libfile-stripnondeterminism-perl libflac-dev libfltk-cairo1.3 libfltk-forms1.3 libfltk-gl1.3 libfltk1.3-dev libglu1-mesa libfltk1.3 libfltk-images1.3 libflxmlrpc1 libflxmlrpc-dev libgcc1 libglib2.0-dev libglib2.0-dev-bin libjack-jackd2-0 libjack-jackd2-dev libmount-dev libogg-dev libpng16-16 libportaudio2 libportaudiocpp0 libpulse0 libpulse-dev libsamplerate0 libsamplerate0-dev libselinux1-dev libsepol1-dev libsndfile1 libsndfile1-dev libstdc++6 libusb-1.0-0-dev libusb-1.0-doc libvorbis-dev libx11-6 libxft-dev libxml2-utils pavucontrol po-debconf portaudio19-dev synaptic xsltproc zlib1g"
 					FLDIGI_DEPS_INSTALLED=$TRUE
 				fi
@@ -1103,21 +1170,14 @@ EOF
 			;;
 
 		hamlib)
-				if (LocalRepoUpdate Hamlib $HAMLIB_GIT_URL) || [[ $FORCE == $TRUE ]]
-				then
-					cd $SRC_DIR/Hamlib
-					autoreconf -f -i
-					./configure && make && sudo make install
-					sudo ldconfig
-					cd $SRC_DIR
-				fi
+			InstallHamlib
 			;;
 
 		direwolf)
 			if (LocalRepoUpdate $APP $DIREWOLF_GIT_URL) || [[ $FORCE == $TRUE ]]
 			then
 			   CheckDepInstalled "git gcc g++ make cmake libasound2-dev libudev-dev gpsd libgps-dev"
-				InstallHamlib
+				InstallHamlib || { echo "=== $APP install not attempted ==="; continue; }
 				cd direwolf
 				mkdir -p build && cd build
 				make clean
@@ -1233,9 +1293,18 @@ EOF
 			[[ -s "$PAT_CONFIG" ]] && cp -f "$PAT_CONFIG" "$TMPDIR/config.json"
 			sudo dpkg -i ${APP}/${PAT_WITH_FORMS_FILE_NAME} || { echo >&2 "======= $APP installation failed with $? ========"; SafeExit 1; }
 			mkdir -p "$PAT_DIR/Standard_Forms"
-			[[ -s "$TMPDIR/config.json" ]] && cp -f "$TMPDIR/config.json" "$PAT_CONFIG"
+			if [[ -s "$TMPDIR/config.json" ]]
+			then
+				cp -f "$TMPDIR/config.json" "$PAT_CONFIG"
+			else
+				PREVIOUS_DIR="$(pwd)"
+				cd $HOME
+				export EDITOR=ed
+				echo -n "" | pat configure >/dev/null 2>&1
+				cd "$PREVIOUS_DIR"			
+			fi
 			FORMS_PATH="$(jq .forms_path "$PAT_CONFIG")"
-			if [[ "$FORMS_PATH" == "null" ]]
+			if [[ "$FORMS_PATH" == "null" || "$FORMS_PATH" == "\"\"" ]]
 			then
 				jq --arg forms_path "$PAT_DIR/Standard_Forms" '. + {forms_path: $forms_path}' $PAT_CONFIG > $TMPDIR/config.json
 				cp -f $PAT_CONFIG $PAT_CONFIG.backup
@@ -1463,7 +1532,7 @@ EOF
          if [[ $LATEST_VERSION != $INSTALLED_VERSION ]] || [[ $FORCE == $TRUE ]]
          then
          	CheckDepInstalled "qt5-qmake g++ libfftw3-dev qt5-default libpulse-dev libasound2-dev libv4l-dev libopenjp2-7-dev"
-         	InstallHamlib
+         	InstallHamlib || { echo "=== $APP install not attempted ==="; continue; }
          	mkdir -p qsstv
          	cd qsstv        
          	echo >&2 "=========== Retrieving $APP from $QSSTV_URL/$TAR_FILE ==========="
