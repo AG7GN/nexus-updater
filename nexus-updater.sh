@@ -318,7 +318,7 @@ function InstallHamlib () {
 		INSTALLED_VERSION_SHA="$(rigctl -V | cut -d'=' -f2)"
 		if [[ $INSTALLED_VERSION_SHA != "" ]] && \
 			[[ $FORCE != $TRUE ]] && \
-			wget -qO - $HAMLIB_LATEST_URL | grep -q "<code>$INSTALLED_VERSION_SHA"
+			wget -qO - "$HAMLIB_LATEST_URL" | grep -q "<code>$INSTALLED_VERSION_SHA"
 		then
 			echo "============= Hamlib up to date ============="
 			return 0
