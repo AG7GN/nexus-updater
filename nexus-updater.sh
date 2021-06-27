@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.3
+#-    version         ${SCRIPT_NAME} 2.1.4
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -449,109 +449,118 @@ and run this script again.</b>" --buttons-layout=center \
 function GenerateList () {
 	# Creates a list of apps used for use in yad selection window
 	# Takes 1 argument:  0 = Pick boxes for installed apps are not checked, 1 = Pick boxes for installed apps are checked.
+	# yad uses pango markup to format text: https://docs.gtk.org/Pango/pango_markup.html
 	TFILE="$(mktemp)"
 	declare -a CHECKED
 	CHECKED[0]="FALSE"
 	CHECKED[1]="TRUE"
-	
+	WARN_OPEN="<span color='red'><s><b>"
+	WARN_CLOSE="</b></s></span>"
+
 	for A in $LIST 
-	do 
-		case $A in
-			nexus-iptables|autohotspot|raspbian)
-				echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE" 
-				;;
-			chirp)
-				if command -v chirpw 1>/dev/null 2>&1
-				then
+	do
+		if echo "$SUSPENDED_APPS" | grep -qx "$A"
+		then
+			# App has been suspended. Apply special formatting.
+			echo -e "FALSE\n${WARN_OPEN}$A${WARN_CLOSE}\n${WARN_OPEN}${DESC[$A]}${WARN_CLOSE}\n${WARN_OPEN}SUSPENDED - serious bug(s)${WARN_CLOSE}" >> "$TFILE"
+		else
+			case $A in
+				nexus-iptables|autohotspot|raspbian)
 					echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE" 
-				else
-					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
-				fi
-				;;
-			hamlib)
-				if command -v rigctl 1>/dev/null 2>&1
-				then
-					echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE" 
-				else
-					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
-				fi
-				;;
-			nexus-utilities)
-				if command -v initialize-pi.sh 1>/dev/null 2>&1
-				then
-					echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE" 
-				else
-					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
-				fi
-				;;
-			nexus-rmsgw)
-				if command -v rmsgw_aci 1>/dev/null 2>&1
-				then
-					echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE" 
-				else
-					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
-				fi
-				;;
-			nexus-updater)
-				echo -e "FALSE\n$A\n${DESC[$A]}\nUpdated Automatically" >> "$TFILE"
-				;;
-			piardop)
-				if command -v piardopc 1>/dev/null 2>&1 && command -v piardop2 1>/dev/null 2>&1
-				then
-   				echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE"
-				else
-					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
-				fi		
-				;;
-			linbpq)
-				if [[ -x $HOME/linbpq/linbpq ]]
-				then
-   				echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE"
-				else
-					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
-				fi		
-				;;
-			710)
-		   	if command -v 710.sh 1>/dev/null 2>&1 
-				then
-	   			echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE"
-				else
-					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
-				fi
-				;;
-			nexus-backup-restore)
-		   	if command -v nexus-backup-restore.sh 1>/dev/null 2>&1 
-				then
-	   			echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE"
-				else
-					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
-				fi
-				;;
-			yaac)
-				if [[ -s /usr/local/share/applications/YAAC.desktop ]]
-         	then
-	   			echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE"
-				else
-					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
-				fi
-				;;    
-			cqrlog)
-				if [[ -s $HOME/cqrlog/usr/bin/cqrlog ]]
-         	then
-	   			echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE"
-				else
-					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
-				fi
-				;;
-			*)
-		   	if command -v $A 1>/dev/null 2>&1 
-				then
-	   			echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE"
-				else
-					echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
-				fi
-				;;
-		esac
+					;;
+				chirp)
+					if command -v chirpw 1>/dev/null 2>&1
+					then
+						echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE" 
+					else
+						echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
+					fi
+					;;
+				hamlib)
+					if command -v rigctl 1>/dev/null 2>&1
+					then
+						echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE" 
+					else
+						echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
+					fi
+					;;
+				nexus-utilities)
+					if command -v initialize-pi.sh 1>/dev/null 2>&1
+					then
+						echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE" 
+					else
+						echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
+					fi
+					;;
+				nexus-rmsgw)
+					if command -v rmsgw_aci 1>/dev/null 2>&1
+					then
+						echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE" 
+					else
+						echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
+					fi
+					;;
+				nexus-updater)
+					echo -e "FALSE\n$A\n${DESC[$A]}\nUpdated Automatically" >> "$TFILE"
+					;;
+				piardop)
+					if command -v piardopc 1>/dev/null 2>&1 && command -v piardop2 1>/dev/null 2>&1
+					then
+						echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE"
+					else
+						echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
+					fi		
+					;;
+				linbpq)
+					if [[ -x $HOME/linbpq/linbpq ]]
+					then
+						echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE"
+					else
+						echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
+					fi		
+					;;
+				710)
+					if command -v 710.sh 1>/dev/null 2>&1 
+					then
+						echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE"
+					else
+						echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
+					fi
+					;;
+				nexus-backup-restore)
+					if command -v nexus-backup-restore.sh 1>/dev/null 2>&1 
+					then
+						echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE"
+					else
+						echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
+					fi
+					;;
+				yaac)
+					if [[ -s /usr/local/share/applications/YAAC.desktop ]]
+					then
+						echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE"
+					else
+						echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
+					fi
+					;;    
+				cqrlog)
+					if [[ -s $HOME/cqrlog/usr/bin/cqrlog ]]
+					then
+						echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE"
+					else
+						echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
+					fi
+					;;
+				*)
+					if command -v $A 1>/dev/null 2>&1 
+					then
+						echo -e "${CHECKED[$1]}\n$A\n${DESC[$A]}\nInstalled - Check for Updates" >> "$TFILE"
+					else
+						echo -e "FALSE\n$A\n${DESC[$A]}\nNew Install" >> "$TFILE"
+					fi
+					;;
+			esac
+		fi
 	done
 }
 
@@ -753,6 +762,12 @@ DESC[xastir]="APRS Tracking and Mapping Utility"
 DESC[qsstv]="Receiving and transmitting SSTV/DSSTV"
 DESC[cqrlog]="Ham radio logger"
 DESC[gpredict]="Real time satellite tracking"
+
+# Add apps to temporarily disable from install/update process in this variable. Set to
+# empty string if there are none. Put each entry on it's own line.
+# Example: SUSPENDED_APPS="fldigi
+#flrig"
+SUSPENDED_APPS="fldigi"
 
 
 #============================
@@ -964,8 +979,8 @@ then
    	SafeExit 0
 	else
 		#APP_LIST="$(echo "$ANS" | grep "^TRUE" | cut -d, -f2 | tr '\n' ',' | sed 's/,$//')"
-		APP_LIST="$(echo "$ANS" | grep "^TRUE" | cut -d, -f2)"
-		if [ ! -z "$APP_LIST" ]
+		APP_LIST="$(echo "$ANS" | grep "^TRUE" | cut -d, -f2 | grep '^[[:alnum:]]' | grep -v -e '^$' )"
+		if [[ ! -z "$APP_LIST" ]]
 		then
       	if echo "$APP_LIST" | grep -q "^pat"
       	then
@@ -1019,13 +1034,19 @@ then
 #	echo >&2 "apt cache less than an hour old"
 fi
 
-APPS="$(echo "${1,,}" | tr ',' '\n' | sort -u | xargs)"
+APPS="$(echo "${1,,}" | tr ',' '\n' | sort -u)"
+for SUSPENDED_APP in $SUSPENDED_APPS
+do
+    APPS=${APPS/$SUSPENDED_APP/}
+done
+APPS="$(echo -e $APPS | xargs)"
 
 for APP in $APPS
 do
+	#APP="$(sed -e "s/$WARN_OPEN//" -e "s/$WARN_CLOSE//" "$APP")"
+	#echo "$SUSPENDED_APPS" |  grep -q "$APP" && continue
 	cd $SRC_DIR
    case $APP in
-
    	raspbian)
 			echo -e "\n=========== Raspbian OS Update Requested ==========="
 			sudo apt -m -y upgrade && echo -e "=========== Raspbian OS Update Finished ==========="
