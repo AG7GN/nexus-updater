@@ -288,6 +288,19 @@ function CheckDepInstalled() {
 	echo >&2 "Done."
 }
 
+function CheckInstall () {
+	local COMMON_ARGS="--type debian --maintainer $MAINTAINER --pkggroup nexusdrx --default --install=no"
+	local PKGNAME="$1"
+	local PKGVERSION="$2"
+	local PKGRELEASE="$3"
+	if sudo checkinstall $COMMON_ARGS --pkgname $PKGNAME --pkgversion $PKGVERSION --pkgrelease $PKGRELEASE
+	then
+		sudo dpkg -i "${PKGNAME}_${PKGVERSION}-${PKGRELEASE}_armhf.deb" && return 0 || return 1
+	else
+		return 1
+	fi
+	
+}
 
 function InstallHamlib () {
 	PREVIOUS_DIR="$(pwd)"
@@ -350,16 +363,18 @@ function InstallHamlib () {
 	   	#do
 	   	#	sudo rm -f /usr/local/bin/$HAMLIB_BIN
 	   	#done
-			if sudo make install
+	   	
+			#if sudo make install
+			if CheckInstall "nexus-$APP" "$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)" 1
 			then
 				sudo ldconfig
-				rm -rf "$HAMLIB_DIR/hamlib"
+				sudo rm -rf "$HAMLIB_DIR/hamlib"
 				mv "$HAMLIB_LATEST_DIR" "$HAMLIB_DIR/hamlib"
 				sudo apt-mark hold libhamlib2 libhamlib-dev libhamlib-utils
 				echo "========= Hamlib installed  =========="
 				RESULT=0
 			else
-				echo "========= Hamlib make install failed  =========="
+				echo "========= Hamlib install failed  =========="
 				RESULT=1
 			fi
 		else
@@ -454,15 +469,15 @@ function GenerateList () {
 	declare -a CHECKED
 	CHECKED[0]="FALSE"
 	CHECKED[1]="TRUE"
-	WARN_OPEN="<span color='red'><s><b>"
-	WARN_CLOSE="</b></s></span>"
+	WARN_OPEN="<span color='red'><b>"
+	WARN_CLOSE="</b></span>"
 
 	for A in $LIST 
 	do
 		if echo "$SUSPENDED_APPS" | grep -qx "$A"
 		then
 			# App has been suspended. Apply special formatting.
-			echo -e "FALSE\n${WARN_OPEN}$A${WARN_CLOSE}\n${WARN_OPEN}${DESC[$A]}${WARN_CLOSE}\n${WARN_OPEN}SUSPENDED - serious bug(s)${WARN_CLOSE}" >> "$TFILE"
+			echo -e "FALSE\n${WARN_OPEN}<s>$A</s>${WARN_CLOSE}\n${WARN_OPEN}<s>${DESC[$A]}</s>${WARN_CLOSE}\n${WARN_OPEN}SUSPENDED - serious bug(s)${WARN_CLOSE}" >> "$TFILE"
 		else
 			case $A in
 				nexus-iptables|autohotspot|raspbian)
@@ -768,6 +783,8 @@ DESC[gpredict]="Real time satellite tracking"
 # Example: SUSPENDED_APPS="fldigi
 #flrig"
 SUSPENDED_APPS="fldigi"
+
+MAINTAINER="ag7gn@arrl.net"
 
 
 #============================
