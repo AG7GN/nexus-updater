@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.5
+#-    version         ${SCRIPT_NAME} 2.1.6
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -1334,7 +1334,7 @@ EOF
         	INSTALLED_VERSION="$(InstalledPkgVersion pat)"
         	LATEST_VERSION="$(echo $PAT_FILE | cut -d '_' -f2)"
         	echo >&2 "Latest version: $LATEST_VERSION   Installed version: $INSTALLED_VERSION"
-        	if [[ $INSTALLED_VERSION == $LATEST_VERSION && ! ("$(pat version 2>/dev/null)" =~ $PAT_WITH_FORMS_RELEASE) && $FORCE == $FALSE ]]
+        	if [[ $INSTALLED_VERSION == $LATEST_VERSION && $FORCE == $FALSE ]]
         	then
         		echo >&2 "============= $APP installed and up to date ============="
 				continue
@@ -1344,30 +1344,10 @@ EOF
 			rm -f $APP/*
 			wget -q -O $APP/$PAT_FILE $PAT_URL || { echo >&2 "======= $PAT_URL download failed with $? ========"; SafeExit 1; }
          [ -s "$APP/$PAT_FILE" ] || { echo >&2 "======= $PAT_FILE is empty ========"; SafeExit 1; }
-         sudo dpkg -i $APP/$PAT_FILE || { echo >&2 "======= pat installation failed with $? ========"; SafeExit 1; }
-         echo "============= $APP installed/updated ============="
-			;;
-
-		pat-with-forms)
-         echo "============= $APP installation requested ============="
-			INSTALLED_VERSION="$(pat version 2>/dev/null)"
-			if [[ $INSTALLED_VERSION =~ $PAT_WITH_FORMS_RELEASE && $FORCE == $FALSE ]]	
-        	then
-        		echo >&2 "============= $APP installed and up to date ============="
-				continue
-			fi
-			# Install or update needed. Get and install the package
-			mkdir -p $APP
-			rm -f $APP/*
-			if ! getGoogleFile "${APP}/${PAT_WITH_FORMS_FILE_NAME}" "$PAT_WITH_FORMS_FILE_ID"
-			then
-         	echo >&2 "======= $APP installation failed. Could not download ${PAT_WITH_FORMS_FILE_NAME}"
-         	SafeExit 1
-			fi
 			PAT_DIR="$HOME/.wl2k"
 			PAT_CONFIG="$PAT_DIR/config.json"
 			[[ -s "$PAT_CONFIG" ]] && cp -f "$PAT_CONFIG" "$TMPDIR/config.json"
-			sudo dpkg -i ${APP}/${PAT_WITH_FORMS_FILE_NAME} || { echo >&2 "======= $APP installation failed with $? ========"; SafeExit 1; }
+         sudo dpkg -i $APP/$PAT_FILE || { echo >&2 "======= pat installation failed with $? ========"; SafeExit 1; }
 			mkdir -p "$PAT_DIR/Standard_Forms"
 			if [[ -s "$TMPDIR/config.json" ]]
 			then
@@ -1386,7 +1366,7 @@ EOF
 				cp -f $PAT_CONFIG $PAT_CONFIG.backup
 				mv -f $TMPDIR/config.json $PAT_CONFIG
 			fi
-        	echo "============= $APP installed/updated ============="	
+         echo "============= $APP installed/updated ============="
 			;;
 
       autohotspot)
