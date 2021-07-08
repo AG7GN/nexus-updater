@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.4
+#-    version         ${SCRIPT_NAME} 2.1.5
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -250,8 +250,8 @@ function InstalledPkgVersion() {
 	# Returns version of installed package or empty string if package is
 	# not installed
 	
-	INSTALLED_="$(dpkg -l "$1" 2>/dev/null | grep "$1" | tr -s ' ')"
-	[[ $INSTALLED_ =~ ^ii ]] && echo "$INSTALLED_" | cut -d ' ' -f3 || echo ""
+	local INSTALLED_="$(dpkg -l "$1" 2>/dev/null | grep "$1" | tr -s ' ')"
+	[[ $INSTALLED_ =~ ^[hi]i ]] && echo "$INSTALLED_" | cut -d ' ' -f3 || echo ""
 }
 
 
@@ -289,16 +289,12 @@ function CheckDepInstalled() {
 }
 
 function CheckInstall () {
-	local COMMON_ARGS="--type debian --maintainer $MAINTAINER --pkggroup nexusdrx --default --install=no"
+	local COMMON_ARGS="--type debian --maintainer $MAINTAINER --pkggroup nexusdrx --default --install=yes"
 	local PKGNAME="$1"
 	local PKGVERSION="$2"
-	local PKGRELEASE="$3"
-	if sudo checkinstall $COMMON_ARGS --pkgname $PKGNAME --pkgversion $PKGVERSION --pkgrelease $PKGRELEASE
-	then
-		sudo dpkg -i "${PKGNAME}_${PKGVERSION}-${PKGRELEASE}_armhf.deb" && return 0 || return 1
-	else
-		return 1
-	fi
+	local PKGRELEASE="${3:-1}"
+	local ADDITIONAL_ARGS="${4:-''}"
+	sudo checkinstall $COMMON_ARGS --pkgname $PKGNAME --pkgversion $PKGVERSION --pkgrelease $PKGRELEASE "$ADDITIONAL_ARGS" && return 0 || return 1
 	
 }
 
@@ -330,7 +326,8 @@ function InstallHamlib () {
 		# it's SHA value to that of the latest available stable version on GitHub.
 		INSTALLED_VERSION_SHA="$(rigctl -V | cut -d'=' -f2)"
 		if [[ $INSTALLED_VERSION_SHA != "" ]] && \
-			[[ $FORCE != $TRUE ]] && \
+			( [[ $FORCE == $FALSE ]] || \
+			( [[ $FORCE == $TRUE ]] && [[ $APP != 'hamlib' ]] ) ) && \
 			wget -qO - "$HAMLIB_LATEST_URL" | grep -q "<code>$INSTALLED_VERSION_SHA"
 		then
 			echo "============= Hamlib up to date ============="
@@ -338,34 +335,39 @@ function InstallHamlib () {
 		fi
 	fi
 	local RESULT=0
-	local HAMLIB_DOWNLOAD_URL="$(wget -qO - "$HAMLIB_LATEST_URL" | grep -m1 "download.*hamlib.*.tar.gz" | grep -Eoi '<a [^>]+>' | grep -Eo 'href="[^\"]+"' | cut -d'"' -f2)"
-	if [[ $HAMLIB_DOWNLOAD_URL =~ amlib ]]
+	local HAMLIB_DOWNLOAD_URL="${GITHUB_URL}$(wget -qO - "$HAMLIB_LATEST_URL" | grep -m1 "download.*hamlib.*.tar.gz" | grep -Eoi '<a [^>]+>' | grep -Eo 'href="[^\"]+"' | cut -d'"' -f2)"
+	if [[ $HAMLIB_DOWNLOAD_URL =~ amlib.*gz ]]
 	then  # Download URL looks valid.
-		local HAMLIB_DOWNLOAD_URL="${GITHUB_URL}$HAMLIB_DOWNLOAD_URL"
 		local HAMLIB_TAR="${HAMLIB_DOWNLOAD_URL##*/}"
 		local HAMLIB_DIR="$SRC_DIR/hamlib"
 		if [[ -d "$SRC_DIR/Hamlib" && "$(ls -A $SRC_DIR/Hamlib)" ]]
 		then
+		   echo >&2 "Uninstalling older hamlib..."
 			cd "$SRC_DIR/Hamlib"
 			sudo make uninstall
 			cd "$PREVIOUS_DIR"
 			rm -rf "$SRC_DIR/Hamlib"
+			echo >&2 "Done"
+		fi
+		if [[ $(InstalledPkgVersion nexus-hamlib) == "" && -f /usr/local/lib/libhamlib.la ]]
+		then # Remove linked libraries from previous non-dpkg installs
+			echo >&2 "Removing older hamlib linked libraries..."
+			sudo rm -f /usr/local/lib/libhamlib*
+			echo >&2 "Done"
 		fi
 		mkdir -p "$HAMLIB_DIR"
 		wget -qO "$HAMLIB_DIR/$HAMLIB_TAR" "$HAMLIB_DOWNLOAD_URL"
+		#echo "Checksum = $(sha256sum $HAMLIB_DIR/$HAMLIB_TAR)"
+		cp "$HAMLIB_DIR/$HAMLIB_TAR" "$HOME/"
 		tar -xzf "$HAMLIB_DIR/$HAMLIB_TAR" -C "${HAMLIB_DIR}/"
 		local HAMLIB_LATEST_DIR="${HAMLIB_DIR}/$(basename "$HAMLIB_TAR" .tar.gz)"
 		cd "$HAMLIB_LATEST_DIR"
 		#autoreconf -f -i || { echo >&2 "======= autoreconf -f -i failed ========"; return 1; }
 		if ./configure && make -j4
 		then
-	   	#for HAMLIB_BIN in rigctl rigctld rigmem rigsmtr rigswr rotctl rotctld rigctlcom ampctl ampctld
-	   	#do
-	   	#	sudo rm -f /usr/local/bin/$HAMLIB_BIN
-	   	#done
-	   	
-			#if sudo make install
-			if CheckInstall "nexus-$APP" "$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)" 1
+			[[ $FORCE == $TRUE ]] && sudo dpkg -r nexus-hamlib
+			sudo rm -f /usr/local/lib/libhamlib*
+			if CheckInstall "nexus-hamlib" "$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)" 1
 			then
 				sudo ldconfig
 				sudo rm -rf "$HAMLIB_DIR/hamlib"
@@ -591,9 +593,9 @@ If there are updates available, it will install them.</b>\n\n \
 This will open the Pi's web browser.\n \
 This Pi must be connected to the Internet for this script to work.\n\n \
 <b><span color='red'>CLOSE ALL OTHER APPS</span></b> <u>before</u> you click OK.\n" \
---separator="," --checklist --grid-lines=hor \
+--separator="," --grid-lines=hor \
 --dclick-action="bash -c \"Help %s\"" \
---auto-kill --column Pick --column Applications --column Description \
+--auto-kill --column 'Install/Update':CHK --column Applications --column Description \
 --column Action < "$TFILE" --buttons-layout=center --button='<b>Cancel</b>':1 --button="<b>$1 All Installed</b>":2 --button='<b>OK</b>':0)"
 }
 
@@ -695,7 +697,7 @@ VERSION="$(ScriptInfo version | grep version | tr -s ' ' | cut -d' ' -f 4)"
 
 GITHUB_URL="https://github.com"
 HAMLIB_LATEST_URL="$GITHUB_URL/Hamlib/Hamlib/releases/latest"
-HAMLIB_GIT_URL="$GITHUB_URL/Hamlib/Hamlib"
+#HAMLIB_GIT_URL="$GITHUB_URL/Hamlib/Hamlib"
 FLROOT_URL="http://www.w1hkj.com/files/"
 FLROOT_GIT_URL="git://git.code.sf.net/p/fldigi"
 WSJTX_KEY_URL="https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xB5E1FEF627613D4957BA72885794D54C862549F9"
@@ -999,16 +1001,16 @@ then
 		APP_LIST="$(echo "$ANS" | grep "^TRUE" | cut -d, -f2 | grep '^[[:alnum:]]' | grep -v -e '^$' )"
 		if [[ ! -z "$APP_LIST" ]]
 		then
-      	if echo "$APP_LIST" | grep -q "^pat"
-      	then
-      		PAT_SELECTION="$(patChooser)"
-      		if [[ "$PAT_SELECTION" =~ pat ]]
-      		then
-      			APP_LIST="$(echo "$APP_LIST" | sed "s/^pat/$PAT_SELECTION/")"
-      		else
-      			APP_LIST="$(echo "$APP_LIST" | grep -v "^pat")"
-      		fi
-      	fi
+      	#if echo "$APP_LIST" | grep -q "^pat"
+      	#then
+      	#	PAT_SELECTION="$(patChooser)"
+      	#	if [[ "$PAT_SELECTION" =~ pat ]]
+      	#	then
+      	#		APP_LIST="$(echo "$APP_LIST" | sed "s/^pat/$PAT_SELECTION/")"
+      	#	else
+      	#		APP_LIST="$(echo "$APP_LIST" | grep -v "^pat")"
+      	#	fi
+      	#fi
 			APP_STRING="$(echo "$APP_LIST" | tr '\n' ',' | sed 's/,$//')"
       	echo "Update/install list: $APP_LIST..."    	
       	[[ -z $APP_STRING ]] && { echo "Update Cancelled"; SafeExit 0; }
@@ -1109,7 +1111,7 @@ do
 					sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list
 					sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list.d/raspi.list
 					#sudo apt update || AptError "sudo apt update"
-					InstallHamlib || { echo "=== $APP install not attempted ==="; continue; }
+					[[ $APP == 'fldigi' ]] && (InstallHamlib || { echo "=== $APP install not attempted ==="; continue; })
 					CheckDepInstalled "asciidoc asciidoc-base asciidoc-common autopoint debhelper dh-autoreconf dh-strip-nondeterminism docbook-xsl dwz gettext intltool-debian libarchive-zip-perl libasound2 libblkid-dev libc6 libffi-dev libfile-stripnondeterminism-perl libflac-dev libfltk-cairo1.3 libfltk-forms1.3 libfltk-gl1.3 libfltk1.3-dev libglu1-mesa libfltk1.3 libfltk-images1.3 libflxmlrpc1 libflxmlrpc-dev libgcc1 libglib2.0-dev libglib2.0-dev-bin libjack-jackd2-0 libjack-jackd2-dev libmount-dev libogg-dev libpng16-16 libportaudio2 libportaudiocpp0 libpulse0 libpulse-dev libsamplerate0 libsamplerate0-dev libselinux1-dev libsepol1-dev libsndfile1 libsndfile1-dev libstdc++6 libusb-1.0-0-dev libusb-1.0-doc libvorbis-dev libx11-6 libxft-dev libxml2-utils pavucontrol po-debconf portaudio19-dev synaptic xsltproc zlib1g"
 					FLDIGI_DEPS_INSTALLED=$TRUE
 				fi
@@ -1123,7 +1125,7 @@ do
       			[[ ! -z $PI_MODEL ]] && CONFIGURE="./configure --enable-optimizations=$PI_MODEL"
       		fi
       		[[ $FORCE == $TRUE ]] && make clean
-      		if $CONFIGURE && make -j4 && sudo make install
+      		if $CONFIGURE && make -j4 && CheckInstall "nexus-$APP" "$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)" 1
       		then
 					# Fix the *.desktop files
                FLDIGI_DESKTOPS="/usr/local/share/applications $HOME/.local/share/applications"
@@ -1166,6 +1168,7 @@ do
 					cp -r /usr/share/xastir/maps/* $HOME/maps
 				fi
 				sudo apt -y remove xastir
+				sudo apt-mark hold xastir
 				sudo apt -y autoremove
 				if [ -d $HOME/maps ]
 				then
@@ -1184,10 +1187,15 @@ do
    	      mkdir -p build
       	   cd build
          	../configure CPPFLAGS="-I/usr/include/geotiff"
-         	if make -j4 && sudo make install
+         	#VER="$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)"
+         	if make -j4
          	then
-            	sudo chmod u+s /usr/local/bin/xastir
-            	cat > $HOME/.local/share/applications/xastir.desktop << EOF
+         		#[[ $FORCE == $TRUE ]] && dpkg -r nexus-$APP
+         		#if CheckInstall nexus-$APP $VER 1 
+         		if sudo make install
+         		then
+            		sudo chmod u+s /usr/local/bin/xastir
+            		cat > $HOME/.local/share/applications/xastir.desktop << EOF
 [Desktop Entry]
 Name=Xastir
 Encoding=UTF-8
@@ -1199,16 +1207,23 @@ Terminal=false
 Type=Application
 Categories=HamRadio;
 EOF
-            	sudo mv -f $HOME/.local/share/applications/xastir.desktop /usr/local/share/applications/
-					sed -i 's|\/usr\/share|\/usr\/local\/share|' $HOME/.xastir/config/xastir.cnf 2>/dev/null
-            	lxpanelctl restart
-            	echo "========= $APP install/update complete ==========="
-         	else
-            	echo "========= $APP installation FAILED ==========="
-	            cd $SRC_DIR
-               rm -rf Xastir/
-	            SafeExit 1
-         	fi
+            		sudo mv -f $HOME/.local/share/applications/xastir.desktop /usr/local/share/applications/
+						sed -i 's|\/usr\/share|\/usr\/local\/share|' $HOME/.xastir/config/xastir.cnf 2>/dev/null
+            		lxpanelctl restart
+            		sudo apt-mark hold xastir
+            		echo "========= $APP installation/update complete ==========="
+					else
+						echo "========= $APP installation FAILED ==========="
+						cd $SRC_DIR
+						#rm -rf Xastir/
+						SafeExit 1
+					fi
+				else
+					echo "========= $APP make FAILED ==========="
+					cd $SRC_DIR
+					rm -rf Xastir/
+					SafeExit 1
+				fi				
          fi
 			;;
 
@@ -1222,18 +1237,36 @@ EOF
 			   CheckDepInstalled "git gcc g++ make cmake libasound2-dev libudev-dev gpsd libgps-dev"
 				InstallHamlib || { echo "=== $APP install not attempted ==="; continue; }
 				cd direwolf
+				git branch -r
+				git checkout master
+				#VER="$(grep "^set(direwolf_VERSION_MAJOR" CMakeLists.txt | cut -d'"' -f2)."
+				#VER+="$(grep "^set(direwolf_VERSION_MINOR" CMakeLists.txt | cut -d'"' -f2)."
+				#VER+="$(grep "^set(direwolf_VERSION_PATCH" CMakeLists.txt | cut -d'"' -f2)"
+				#VER+="$(grep "^set(direwolf_VERSION_SUFFIX" CMakeLists.txt | cut -d'"' -f2)"
 				mkdir -p build && cd build
 				make clean
 				rm -f CMakeCache.txt
-            if cmake .. && make -j4 && sudo make install
+            if cmake .. && make update-data && make -j4 && make install-conf
             then
-               make install-conf
-               [ -f /usr/local/share/applications/direwolf.desktop ] && sudo mv -f /usr/local/share/applications/direwolf.desktop /usr/local/share/applications/direwolf.desktop.disabled
-               echo "========= $APP installation complete ==========="
+            	echo >&2 "Packaging and installing direwolf..."
+            	sudo chown $USER:$USER install_manifest.txt
+            	[[ $FORCE == $TRUE ]] && sudo dpkg -r direwolf
+               if cpack -G DEB && sudo apt -y install ./direwolf-*.deb
+               then
+               	echo >&2 "Done."
+               	sudo apt-mark hold direwolf
+               	[ -f /usr/local/share/applications/direwolf.desktop ] && sudo mv -f /usr/local/share/applications/direwolf.desktop /usr/local/share/applications/direwolf.desktop.disabled
+               	echo "========= $APP installation complete ==========="
+               else
+						echo >&2 "========= $APP packaging or installation FAILED ==========="
+						cd $SRC_DIR
+						sudo rm -rf direwolf/
+						SafeExit 1
+               fi
             else
-               echo >&2 "========= $APP installation FAILED ==========="
+               echo >&2 "========= $APP make FAILED ==========="
                cd $SRC_DIR
-               rm -rf direwolf/
+               sudo rm -rf direwolf/
                SafeExit 1
             fi
 			fi
@@ -1274,11 +1307,11 @@ EOF
                tar xzf $TAR_FILE
                ARIM_DIR="$(echo $TAR_FILE | sed 's/.tar.gz//')"
                cd $ARIM_DIR
-               if ./configure && make -j4 && sudo make install
+               if ./configure && make -j4 && CheckInstall "nexus-$APP" "$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)" 1
                then
 						lxpanelctl restart
                   cd ..
-                  rm -rf $ARIM_DIR
+                  sudo rm -rf $ARIM_DIR
                   rm -f $TAR_FILE
                   echo "=========== $APP_NAME installed ==========="
                else
@@ -1566,6 +1599,7 @@ EOF
 			;;
 
 		qsstv)
+		   # NOT checkinstall compatible
          echo "======== $APP install/upgrade was requested ========="
          TAR_FILE="$(wget -q -O - $QSSTV_URL | egrep -o 'href="qsstv_.*.tar.gz"' | tail -1 | cut -d'"' -f2)"
 			[[ $TAR_FILE == "" ]] && { echo >&2 "======= Download failed.  Could not find tar file URL ========"; SafeExit 1; }
@@ -1598,6 +1632,8 @@ EOF
          		mv $FIXED_FILE $FILE_TO_FIX
 				fi
       		AdjustSwap 2048
+      		VER="$(basename $TAR_FILE .tar.gz)"
+      		VER="${VER##*_}"
          	if qmake -qt=qt5 && make -j4 && sudo make install
          	then
          		# Locate the binary
@@ -1672,9 +1708,20 @@ EOF
 				CheckDepInstalled "libtool intltool autoconf automake libcurl4-openssl-dev pkg-config libglib2.0-dev libgtk-3-dev libgoocanvas-2.0-dev"
 				cd gpredict
 				./autogen.sh
-				if make -j4 && sudo make install
-				then 
-        			cat > $HOME/.local/share/applications/gpredict.desktop << EOF
+				PACKAGE_VERSION="$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)"
+				if [[ $PACKAGE_VERSION =~ - ]]
+				then
+					PACKAGE_RELEASE="${PACKAGE_VERSION##*-}"
+					PACKAGE_VERSION="${PACKAGE_VERSION%%-*}"
+				else
+					PACKAGE_RELEASE=1
+				fi				
+				if make -j4
+				then
+					[[ $FORCE == $TRUE ]] && sudo dpkg -r nexus-$APP
+					if CheckInstall nexus-$APP "$PACKAGE_VERSION" "$PACKAGE_RELEASE"
+					then 
+        				cat > $HOME/.local/share/applications/gpredict.desktop << EOF
 [Desktop Entry]
 Name=Gpredict
 Encoding=UTF-8
@@ -1686,10 +1733,16 @@ Terminal=false
 Type=Application
 Categories=HamRadio;
 EOF
-           		sudo mv -f $HOME/.local/share/applications/gpredict.desktop /usr/local/share/applications/
-	  				echo >&2 "============= $APP installed/updated ================="
+           			sudo mv -f $HOME/.local/share/applications/gpredict.desktop /usr/local/share/applications/
+	  					echo >&2 "============= $APP installed/updated ================="
+	  				else
+						echo >&2 "============= $APP installation failed ================="	
+						cd $SRC_DIR
+						rm -rf gpredict
+						SafeExit 1
+					fi 					
 				else
-   				echo >&2 "============= $APP install failed ================="	
+   				echo >&2 "============= $APP build failed ================="	
    				cd $SRC_DIR
    				rm -rf gpredict
    				SafeExit 1
