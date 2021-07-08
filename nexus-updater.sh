@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.6
+#-    version         ${SCRIPT_NAME} 2.1.7
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -760,7 +760,7 @@ DESC[flmsg]="Forms Manager for Fldigi"
 DESC[flrig]="Rig Control for Fldigi"
 DESC[flwrap]="File Encapsulation for Fldigi"
 DESC[hamlib]="API for controlling radios (rigctl)"
-DESC[nexus-backup-restore]="Backup/Restore Home Folder"
+DESC[nexus-backup-restore]="Nexus Backup/Restore scripts"
 DESC[nexus-iptables]="Firewall Rules for Nexus Image"
 DESC[nexus-rmsgw]="RMS Gateway software for the Nexus Image"
 DESC[nexus-updater]="This Updater script"
