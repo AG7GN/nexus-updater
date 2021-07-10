@@ -1036,7 +1036,7 @@ fi
 sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list
 sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list.d/raspi.list
 
-CheckDepInstalled "extra-xdg-menus bc dnsutils libgtk-3-bin jq xdotool moreutils exfat-utils build-essential autoconf automake libtool checkinstall git aptitude python3-tabulate dos2unix firefox-esr"
+CheckDepInstalled "extra-xdg-menus bc dnsutils libgtk-3-bin jq xdotool moreutils exfat-utils build-essential autoconf automake libtool checkinstall git aptitude python3-tabulate python3-pip dos2unix firefox-esr"
 
 DEFAULT_BROWSER="$(xdg-settings get default-web-browser)"
 [[ $DEFAULT_BROWSER =~ firefox ]] || xdg-settings set default-web-browser firefox-esr.desktop
@@ -1085,6 +1085,7 @@ do
       	;;
 
       nexus-backup-restore)
+      	sudo pip3 install mgzip
       	NexusLocalRepoUpdate nexus-backup-restore $NEXUS_BU_RS_GIT_URL
       	;;
 
@@ -1094,7 +1095,6 @@ do
 
      	nexus-rmsgw)
      		CheckDepInstalled "xutils-dev libxml2 libxml2-dev libncurses5-dev python-requests"
-     		echo "Depencies Checked for nexus-rmsgw"
      		NexusLocalRepoUpdate nexus-rmsgw $NEXUS_RMSGW_GIT_URL
      		;;
 
