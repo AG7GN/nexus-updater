@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.7
+#-    version         ${SCRIPT_NAME} 2.1.8
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -293,7 +293,7 @@ function CheckInstall () {
 	local PKGNAME="$1"
 	local PKGVERSION="$2"
 	local PKGRELEASE="${3:-1}"
-	local ADDITIONAL_ARGS="${4:-''}"
+	local ADDITIONAL_ARGS="${4:-}"
 	sudo checkinstall $COMMON_ARGS --pkgname $PKGNAME --pkgversion $PKGVERSION --pkgrelease $PKGRELEASE "$ADDITIONAL_ARGS" && return 0 || return 1
 	
 }
@@ -1190,9 +1190,17 @@ do
          	#VER="$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)"
          	if make -j4
          	then
-         		#[[ $FORCE == $TRUE ]] && dpkg -r nexus-$APP
-         		#if CheckInstall nexus-$APP $VER 1 
-         		if sudo make install
+         		[[ $FORCE == $TRUE ]] && sudo dpkg -P nexus-$APP
+					PACKAGE_VERSION="$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)"
+					if [[ $PACKAGE_VERSION =~ - ]]
+					then
+						PACKAGE_RELEASE="${PACKAGE_VERSION##*-}"
+						PACKAGE_VERSION="${PACKAGE_VERSION%%-*}"
+					else
+						PACKAGE_RELEASE=1
+					fi				
+         		sudo mkdir -p "/usr/local/share/xastir/maps/Online"
+         		if CheckInstall nexus-$APP "$PACKAGE_VERSION" "$PACKAGE_RELEASE" 
          		then
             		sudo chmod u+s /usr/local/bin/xastir
             		cat > $HOME/.local/share/applications/xastir.desktop << EOF
@@ -1215,13 +1223,13 @@ EOF
 					else
 						echo "========= $APP installation FAILED ==========="
 						cd $SRC_DIR
-						#rm -rf Xastir/
+						sudo rm -rf Xastir/
 						SafeExit 1
 					fi
 				else
 					echo "========= $APP make FAILED ==========="
 					cd $SRC_DIR
-					rm -rf Xastir/
+					sudo rm -rf Xastir/
 					SafeExit 1
 				fi				
          fi
@@ -1293,7 +1301,7 @@ EOF
             LATEST_VERSION="$(echo $FNAME | cut -d'-' -f2)"
             INSTALLED_VERSION="$($APP_NAME -v 2>/dev/null | grep -i "^$APP_NAME" | cut -d' ' -f2)"
 	        	echo >&2 "Latest version: $LATEST_VERSION   Installed version: $INSTALLED_VERSION"
-            if [[ $LATEST_VERSION != $INSTALLED_VERSION ]]
+            if [[ $LATEST_VERSION != $INSTALLED_VERSION || $FORCE == $TRUE ]]
             then
      	         command -v piardopc >/dev/null || InstallPiardop
                echo "======== Downloading $TAR_FILE_URL ==========="
@@ -1307,18 +1315,38 @@ EOF
                tar xzf $TAR_FILE
                ARIM_DIR="$(echo $TAR_FILE | sed 's/.tar.gz//')"
                cd $ARIM_DIR
-               if ./configure && make -j4 && CheckInstall "nexus-$APP" "$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)" 1
+               if ./configure && make -j4
                then
-						lxpanelctl restart
-                  cd ..
-                  sudo rm -rf $ARIM_DIR
-                  rm -f $TAR_FILE
-                  echo "=========== $APP_NAME installed ==========="
-               else
-                  echo >&2 "===========  $APP_NAME installation FAILED ========="
-                  cd $SRC_DIR
-                  SafeExit 1
-               fi
+               	[[ $FORCE == $TRUE ]] && sudo dpkg -P nexus-$APP_NAME
+  						PACKAGE_VERSION="$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)"
+						if [[ $PACKAGE_VERSION =~ - ]]
+						then
+							PACKAGE_RELEASE="${PACKAGE_VERSION##*-}"
+							PACKAGE_VERSION="${PACKAGE_VERSION%%-*}"
+						else
+							PACKAGE_RELEASE=1
+						fi				
+						if CheckInstall nexus-$APP_NAME "$PACKAGE_VERSION" "$PACKAGE_RELEASE"
+						then
+							lxpanelctl restart
+							cd ..
+							sudo rm -rf $ARIM_DIR
+							rm -f $TAR_FILE
+							echo "=========== $APP_NAME installed ==========="
+						else
+							echo >&2 "===========  $APP_NAME installation FAILED ========="
+							cd ..
+							sudo rm -rf $ARIM_DIR
+							rm -f $TAR_FILE
+							SafeExit 1
+						fi
+					else
+						echo >&2 "===========  $APP_NAME make FAILED ========="
+						cd ..
+						sudo rm -rf $ARIM_DIR
+						rm -f $TAR_FILE
+						SafeExit 1
+					fi
             else
                echo "============= $APP_NAME is at latest version $LATEST_VERSION ================"
             fi
@@ -1507,19 +1535,33 @@ EOF
 					cd $SRC_DIR/linpac
 					git checkout develop
 					autoreconf --install
-					if (./configure && make)
+					if (./configure && make -j4)
 					then 
-	            	sudo /bin/mkdir -p "/usr/share/linpac/contrib"
-               	sudo /bin/mkdir -p "/usr/share/doc/linpac/czech"
-               	sudo /bin/mkdir -p "/usr/share/linpac/macro/cz"
-               	sudo /bin/mkdir -p "/usr/libexec/linpac"
-						sudo make install
-						sudo ldconfig
-	     				echo >&2 "============= linpac installed/updated ================="
+						sudo /bin/mkdir -p "/usr/local/share/linpac/macro"
+						sudo /bin/mkdir -p "/usr/local/share/doc/linpac"
+	            	sudo /bin/mkdir -p "/usr/local/libexec/linpac"           	
+						PACKAGE_VERSION="$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)"
+						if [[ $PACKAGE_VERSION =~ - ]]
+						then
+							PACKAGE_RELEASE="${PACKAGE_VERSION##*-}"
+							PACKAGE_VERSION="${PACKAGE_VERSION%%-*}"
+						else
+							PACKAGE_RELEASE=1
+						fi				
+						if CheckInstall nexus-$APP "$PACKAGE_VERSION" "$PACKAGE_RELEASE"
+						then
+							sudo ldconfig
+	     					echo >&2 "============= linpac installed/updated ================="
+	     				else
+							echo >&2 "============= linpac make failed ================="	
+							cd $SRC_DIR
+							sudo rm -rf linpac/
+							SafeExit 1
+	     				fi
 					else
-     					echo >&2 "============= linpac install failed ================="	
+     					echo >&2 "============= linpac make failed ================="	
      					cd $SRC_DIR
-     					rm -rf linpac/
+     					sudo rm -rf linpac/
      					SafeExit 1
 					fi
 				fi
@@ -1612,14 +1654,17 @@ EOF
          		mv $FIXED_FILE $FILE_TO_FIX
 				fi
       		AdjustSwap 2048
-      		VER="$(basename $TAR_FILE .tar.gz)"
-      		VER="${VER##*_}"
-         	if qmake -qt=qt5 && make -j4 && sudo make install
-         	then
-         		# Locate the binary
-         		QSSTV_BIN="$(egrep -m1 ^QMAKE_TARGET Makefile | tr -d ' ' | cut -d'=' -f2)"
-         		QSSTV_PATH="$(sudo find / -type f -name $QSSTV_BIN ! -path '/usr/local/src/nexus/*' 2>/dev/null)"
-           		cat > $HOME/.local/share/applications/qsstv.desktop << EOF
+         	if qmake -qt=qt5 && make -j4
+				then
+					PACKAGE_VERSION="$(basename $TAR_FILE .tar.gz)"
+					PACKAGE_VERSION="${PACKAGE_VERSION##*_}"
+         		#if CheckInstall nexus-$APP "$PACKAGE_VERSION" 1
+         		if sudo make install
+         		then
+						## Locate the binary
+						QSSTV_BIN="$(egrep -m1 ^QMAKE_TARGET Makefile | tr -d ' ' | cut -d'=' -f2)"
+						QSSTV_PATH="$(sudo find / -type f -name $QSSTV_BIN ! -path '/usr/local/src/nexus/*' 2>/dev/null)"
+						cat > $HOME/.local/share/applications/qsstv.desktop << EOF
 [Desktop Entry]
 Name=QSSTV
 Encoding=UTF-8
@@ -1631,16 +1676,21 @@ Terminal=false
 Type=Application
 Categories=HamRadio;
 EOF
-            	sudo mv -f $HOME/.local/share/applications/qsstv.desktop /usr/local/share/applications/
-					echo >&2 "============= $APP installed/updated ================="
-					cd $SRC_DIR
-					rm -f $INSTALLED_VERSION
-					#rm -rf qsstv/${TAR_FILE%.tar.gz}
-					rm -rf $(ls -td qsstv/*/ | head -1)
+						sudo mv -f $HOME/.local/share/applications/qsstv.desktop /usr/local/share/applications/
+						echo >&2 "============= $APP installed/updated ================="
+						cd $SRC_DIR
+						rm -f $INSTALLED_VERSION
+						rm -rf $(ls -td qsstv/*/ | head -1)
+					else
+						echo >&2 "============= $APP install failed ================="	
+						cd $SRC_DIR
+						sudo rm -rf qsstv
+						SafeExit 1
+					fi
          	else
-					echo >&2 "============= $APP install failed ================="	
+					echo >&2 "============= $APP make failed ================="	
 					cd $SRC_DIR
-					rm -rf qsstv
+					sudo rm -rf qsstv
 					SafeExit 1
 				fi
 				AdjustSwap
@@ -1675,7 +1725,7 @@ EOF
 				else
    				echo >&2 "============= $APP install failed ================="	
    				cd $SRC_DIR
-   				rm -rf cqrlog
+   				sudo rm -rf cqrlog
    				SafeExit 1
 				fi
 			fi
@@ -1689,15 +1739,16 @@ EOF
 				cd gpredict
 				./autogen.sh
 				PACKAGE_VERSION="$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)"
-				if [[ $PACKAGE_VERSION =~ - ]]
-				then
-					PACKAGE_RELEASE="${PACKAGE_VERSION##*-}"
-					PACKAGE_VERSION="${PACKAGE_VERSION%%-*}"
-				else
-					PACKAGE_RELEASE=1
-				fi				
 				if make -j4
 				then
+					PACKAGE_VERSION="$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)"
+					if [[ $PACKAGE_VERSION =~ - ]]
+					then
+						PACKAGE_RELEASE="${PACKAGE_VERSION##*-}"
+						PACKAGE_VERSION="${PACKAGE_VERSION%%-*}"
+					else
+						PACKAGE_RELEASE=1
+					fi				
 					[[ $FORCE == $TRUE ]] && sudo dpkg -r nexus-$APP
 					if CheckInstall nexus-$APP "$PACKAGE_VERSION" "$PACKAGE_RELEASE"
 					then 
