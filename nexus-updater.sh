@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.8
+#-    version         ${SCRIPT_NAME} 2.1.9
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -593,10 +593,13 @@ If there are updates available, it will install them.</b>\n\n \
 This will open the Pi's web browser.\n \
 This Pi must be connected to the Internet for this script to work.\n\n \
 <b><span color='red'>CLOSE ALL OTHER APPS</span></b> <u>before</u> you click OK.\n" \
---separator="," --grid-lines=hor \
+--separator="|" --checklist --grid-lines=hor \
 --dclick-action="bash -c \"Help %s\"" \
---auto-kill --column 'Install/Update':CHK --column Applications --column Description \
---column Action < "$TFILE" --buttons-layout=center --button='<b>Cancel</b>':1 --button="<b>$1 All Installed</b>":2 --button='<b>OK</b>':0)"
+--auto-kill --column 'Install/Update' --column Applications --column Description \
+--column Action < "$TFILE" --buttons-layout=center --button='<b>Cancel</b>':1 \
+--button="<b>$1 All Installed</b>":2 --button='<b>OK</b>':0)"
+	return $?
+
 }
 
 function patChooser () {
@@ -969,11 +972,11 @@ then
 	# Initially generate app list with pick boxes for installed apps not checked
 	GenerateList 0
 	PICKBUTTON="Select"
-	until [ $RESULT -ne 2 ]
+	until [[ $RESULT != 2 ]]
 	do 
-		GenerateTable $PICKBUTTON 
-		RESULT="$?"
-		if [ $RESULT -eq 2 ]
+		GenerateTable $PICKBUTTON
+		RESULT=$?
+		if [[ $RESULT == 2 ]]
 		then # User clicked "*Select All Installed" button
 			case $PICKBUTTON in
 				Select)
@@ -992,27 +995,17 @@ then
 		fi	
 	done
 	rm -f "$TFILE"
-	if [ $RESULT -eq "1" ] || [[ $ANS == "" ]]
+	if [[ $RESULT == 1 ]] || [[ $ANS == "" ]]
 	then 
    	echo "Update Cancelled"
    	SafeExit 0
 	else
-		#APP_LIST="$(echo "$ANS" | grep "^TRUE" | cut -d, -f2 | tr '\n' ',' | sed 's/,$//')"
-		APP_LIST="$(echo "$ANS" | grep "^TRUE" | cut -d, -f2 | grep '^[[:alnum:]]' | grep -v -e '^$' )"
+		#APP_LIST="$(echo "$ANS" | grep "^TRUE" | cut -d'|' -f2 | tr '\n' ',' | sed 's/,$//')"
+		APP_LIST="$(echo "$ANS" | grep "^TRUE" | cut -d'|' -f2 | grep '^[[:alnum:]]' | grep -v -e '^$' )"
 		if [[ ! -z "$APP_LIST" ]]
 		then
-      	#if echo "$APP_LIST" | grep -q "^pat"
-      	#then
-      	#	PAT_SELECTION="$(patChooser)"
-      	#	if [[ "$PAT_SELECTION" =~ pat ]]
-      	#	then
-      	#		APP_LIST="$(echo "$APP_LIST" | sed "s/^pat/$PAT_SELECTION/")"
-      	#	else
-      	#		APP_LIST="$(echo "$APP_LIST" | grep -v "^pat")"
-      	#	fi
-      	#fi
 			APP_STRING="$(echo "$APP_LIST" | tr '\n' ',' | sed 's/,$//')"
-      	echo "Update/install list: $APP_LIST..."    	
+      	echo "Update/install list: ${APP_STRING}..."    	
       	[[ -z $APP_STRING ]] && { echo "Update Cancelled"; SafeExit 0; }
       	if $0 $APP_STRING
       	then
