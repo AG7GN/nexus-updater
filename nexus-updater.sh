@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.9
+#-    version         ${SCRIPT_NAME} 2.1.10
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -670,6 +670,7 @@ function Help () {
 	APPS[qsstv]="http://users.telenet.be/on4qz/index.html"
 	APPS[cqrlog]="https://www.cqrlog.com"
 	APPS[gpredict]="http://gpredict.oz9aec.net/index.php"
+	APPS[putty]="https://www.chiark.greenend.org.uk/~sgtatham/putty/"
 	APP="$2"
 	$BROWSER ${APPS[$APP]} 2>/dev/null &
 }
@@ -735,6 +736,7 @@ YAAC_URL="https://www.ka2ddo.org/ka2ddo/YAAC.zip"
 QSSTV_URL="http://users.telenet.be/on4qz/qsstv/downloads"
 CQRLOG_GIT_URL="$GITHUB_URL/ok2cqr/cqrlog.git"
 GPREDICT_GIT_URL="$GITHUB_URL/csete/gpredict.git"
+PUTTY_URL="https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html"
 REBOOT="NO"
 #SRC_DIR="/usr/local/src/nexus"
 #SHARE_DIR="/usr/local/share/nexus"
@@ -749,7 +751,7 @@ FLDIGI_DEPS_INSTALLED=$FALSE
 SWAP_FILE="/etc/dphys-swapfile"
 SWAP="$(grep "^CONF_SWAPSIZE" $SWAP_FILE | cut -d= -f2)"
 
-LIST="raspbian 710 arim autohotspot chirp cqrlog direwolf flamp fldigi flmsg flrig flwrap gpredict hamlib js8call linbpq linpac nexus-backup-restore nexus-iptables nexus-rmsgw nexus-updater nexus-utilities pat piardop pmon qsstv uronode wsjtx yaac xastir"
+LIST="raspbian 710 arim autohotspot chirp cqrlog direwolf flamp fldigi flmsg flrig flwrap gpredict hamlib js8call linbpq linpac nexus-backup-restore nexus-iptables nexus-rmsgw nexus-updater nexus-utilities pat piardop pmon putty qsstv uronode wsjtx yaac xastir"
 declare -A DESC
 DESC[raspbian]="Raspbian OS and Apps"
 DESC[710]="Rig Control Scripts for Kenwood 710/71A"
@@ -782,6 +784,7 @@ DESC[xastir]="APRS Tracking and Mapping Utility"
 DESC[qsstv]="Receiving and transmitting SSTV/DSSTV"
 DESC[cqrlog]="Ham radio logger"
 DESC[gpredict]="Real time satellite tracking"
+DESC[putty]="SSH, Telnet and serial console"
 
 # Add apps to temporarily disable from install/update process in this variable. Set to
 # empty string if there are none. Put each entry on it's own line.
@@ -1603,7 +1606,7 @@ Encoding=UTF-8
 GenericName=YAAC
 Comment=Yet Another APRS Client
 Exec=java -jar $HOME/YAAC/YAAC.jar
-Icon=$HOME/YAAC/images/yaaclogo32.ico
+Icon=$HOME/YAAC/images/yaaclogo64.ico
 Terminal=false
 Type=Application
 Categories=HamRadio;
@@ -1611,6 +1614,64 @@ EOF
 				sudo mv -f $HOME/.local/share/applications/YAAC.desktop /usr/local/share/applications/
 			fi
 			echo >&2 "============= $APP installed/updated ================="
+			;;
+
+		putty)
+			echo "======== $APP installation requested ==========="
+			TAR_FILE_URL="$(wget -q -O - $PUTTY_URL | egrep -m1 -o 'href=".*putty-.*.tar.gz"' | tail -1 | cut -d'"' -f2)"
+			[[ $TAR_FILE_URL == "" ]] && { echo >&2 "======= Download failed.  Could not find tar file URL ========"; SafeExit 1; }
+			TAR_FILE="${TAR_FILE_URL##*/}"
+			LATEST_VERSION="$(basename $TAR_FILE .tar.gz | cut -d'-' -f2)"
+			INSTALLED_VERSION="$(plink -V | grep -m1 '^plink.*elease ' | cut -d' ' -f3)"
+			        	echo >&2 "Latest version: $LATEST_VERSION   Installed version: $INSTALLED_VERSION"
+         if [[ $LATEST_VERSION != $INSTALLED_VERSION ]] || [[ $FORCE == $TRUE ]]
+         then
+				mkdir -p putty
+				cd putty
+				wget -q -O $TAR_FILE "$TAR_FILE_URL" || { echo >&2 "======= $TAR_FILE_URL download failed with $? ========"; SafeExit 1; }
+				tar xzvf $TAR_FILE
+				cd $(ls -td */ | head -1)
+				if ./configure && make -j4
+				then
+					sudo dpkg -r putty
+					sudo apt-mark hold putty
+					sudo dpkg -r nexus-putty
+					if CheckInstall nexus-$APP "$LATEST_VERSION" 1
+					then
+						mkdir -p $HOME/.icons/putty
+						cp windows/*.ico $HOME/.icons/putty
+					   cat > $HOME/.local/share/applications/putty.desktop << EOF
+[Desktop Entry]
+Name=Putty
+Encoding=UTF-8
+GenericName=Putty
+Comment=SSH, Telnet, Serial Console
+Exec=/usr/local/bin/putty
+Icon=$HOME/.icons/putty/putty.ico
+Terminal=false
+Type=Application
+Categories=HamRadio;
+EOF
+						sudo mv -f $HOME/.local/share/applications/putty.desktop /usr/local/share/applications/
+	  					echo >&2 "============= $APP installed/updated ================="
+						cd $SRC_DIR
+						sudo rm -rf "$(ls -td putty/*/ | head -1)"
+						rm -f putty/putty-*.tar.gz
+	  				else
+						echo >&2 "============= $APP installation failed ================="	
+						cd $SRC_DIR
+						sudo rm -rf putty
+						SafeExit 1
+					fi
+				else
+					echo >&2 "============= $APP make failed ================="	
+					cd $SRC_DIR
+					sudo rm -rf putty
+					SafeExit 1					
+				fi
+			else
+				echo "============= $APP is installed and up to date ============="			
+			fi
 			;;
 
 		qsstv)
