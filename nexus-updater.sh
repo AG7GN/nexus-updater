@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.11
+#-    version         ${SCRIPT_NAME} 2.1.12
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -594,7 +594,7 @@ This will open the Pi's web browser.\n \
 This Pi must be connected to the Internet for this script to work.\n\n \
 <b><span color='red'>CLOSE ALL OTHER APPS</span></b> <u>before</u> you click OK.\n" \
 --separator="|" --checklist --grid-lines=hor \
---dclick-action="bash -c \"Help %s\" &" \
+--dclick-action="bash -c \"Help %s\"" \
 --auto-kill --column 'Install/Update' --column Applications --column Description \
 --column Action < "$TFILE" --buttons-layout=center --button='<b>Cancel</b>':1 \
 --button="<b>$1 All Installed</b>":2 --button='<b>OK</b>':0)"
@@ -639,7 +639,6 @@ EOF
 
 
 function Help () {
-	#BROWSER="$(command -v chromium-browser)"
 	declare -A APPS
 	APPS[raspbian]="https://www.raspbian.org/"
 	APPS[fldigi]="http://www.w1hkj.com/FldigiHelp"
@@ -772,14 +771,13 @@ DESC[nexus-iptables]="Firewall Rules for Nexus Image"
 DESC[nexus-rmsgw]="RMS Gateway software for the Nexus Image"
 DESC[nexus-updater]="This Updater script"
 DESC[nexus-utilities]="Scripts and Apps for Nexus Image"
-DESC[js8call]="Weak signal keyboard to keyboard messaging using JS8"
+DESC[js8call]="Weak signal messaging using JS8"
 DESC[linpac]="AX.25 keyboard to keyboard chat and PBBS"
 DESC[linbpq]="G8BPQ AX25 Networking Package"
 DESC[pat]="Winlink Email Client"
-DESC[pat-with-forms]="BETA - pat with Winlink Forms support"
-DESC[piardop]="Amateur Radio Digital Open Protocol Modem Versions 1 and 2"
+DESC[piardop]="Digital Open Protocol Modem versions 1 and 2"
 DESC[pmon]="PACTOR Monitoring Utility"
-DESC[uronode]="Node front end for AX.25, NET/ROM, Rose and TCP"
+DESC[uronode]="Node front end for AX.25, NET/ROM, Rose, TCP"
 DESC[wsjtx]="Weak Signal Modes Modem"
 DESC[yaac]="Yet Another APRS Client"
 DESC[xastir]="APRS Tracking and Mapping Utility"
