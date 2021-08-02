@@ -594,7 +594,7 @@ This will open the Pi's web browser.\n \
 This Pi must be connected to the Internet for this script to work.\n\n \
 <b><span color='red'>CLOSE ALL OTHER APPS</span></b> <u>before</u> you click OK.\n" \
 --separator="|" --checklist --grid-lines=hor \
---dclick-action="bash -c \"Help %s\"" \
+--dclick-action="bash -c \"Help %s\" &" \
 --auto-kill --column 'Install/Update' --column Applications --column Description \
 --column Action < "$TFILE" --buttons-layout=center --button='<b>Cancel</b>':1 \
 --button="<b>$1 All Installed</b>":2 --button='<b>OK</b>':0)"
@@ -889,7 +889,7 @@ do
 done
 shift $((${OPTIND} - 1)) ## shift options
 
-export click_pat_help_cmd='bash -c "xdg-open /usr/local/share/nexus/pat_help.html"'
+#export click_pat_help_cmd='bash -c "xdg-open /usr/local/share/nexus/pat_help.html"'
 
 
 #============================
