@@ -639,7 +639,7 @@ EOF
 
 
 function Help () {
-	BROWSER="$(command -v chromium-browser)"
+	#BROWSER="$(command -v chromium-browser)"
 	declare -A APPS
 	APPS[raspbian]="https://www.raspbian.org/"
 	APPS[fldigi]="http://www.w1hkj.com/FldigiHelp"
@@ -673,7 +673,7 @@ function Help () {
 	APPS[putty]="https://www.chiark.greenend.org.uk/~sgtatham/putty/"
 	APPS[wfview]="https://wfview.org/"
 	APP="$2"
-	$BROWSER ${APPS[$APP]} 2>/dev/null &
+	xdg-open ${APPS[$APP]} 2>/dev/null &
 }
 export -f Help
 
