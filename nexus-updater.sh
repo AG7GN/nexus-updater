@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.10
+#-    version         ${SCRIPT_NAME} 2.1.11
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -671,6 +671,7 @@ function Help () {
 	APPS[cqrlog]="https://www.cqrlog.com"
 	APPS[gpredict]="http://gpredict.oz9aec.net/index.php"
 	APPS[putty]="https://www.chiark.greenend.org.uk/~sgtatham/putty/"
+	APPS[wfview]="https://wfview.org/"
 	APP="$2"
 	$BROWSER ${APPS[$APP]} 2>/dev/null &
 }
@@ -737,6 +738,7 @@ QSSTV_URL="http://users.telenet.be/on4qz/qsstv/downloads"
 CQRLOG_GIT_URL="$GITHUB_URL/ok2cqr/cqrlog.git"
 GPREDICT_GIT_URL="$GITHUB_URL/csete/gpredict.git"
 PUTTY_URL="https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html"
+WFVIEW_GIT_URL="https://gitlab.com/eliggett/wfview.git"
 REBOOT="NO"
 #SRC_DIR="/usr/local/src/nexus"
 #SHARE_DIR="/usr/local/share/nexus"
@@ -751,7 +753,7 @@ FLDIGI_DEPS_INSTALLED=$FALSE
 SWAP_FILE="/etc/dphys-swapfile"
 SWAP="$(grep "^CONF_SWAPSIZE" $SWAP_FILE | cut -d= -f2)"
 
-LIST="raspbian 710 arim autohotspot chirp cqrlog direwolf flamp fldigi flmsg flrig flwrap gpredict hamlib js8call linbpq linpac nexus-backup-restore nexus-iptables nexus-rmsgw nexus-updater nexus-utilities pat piardop pmon putty qsstv uronode wsjtx yaac xastir"
+LIST="raspbian 710 arim autohotspot chirp cqrlog direwolf flamp fldigi flmsg flrig flwrap gpredict hamlib js8call linbpq linpac nexus-backup-restore nexus-iptables nexus-rmsgw nexus-updater nexus-utilities pat piardop pmon putty qsstv uronode wfview wsjtx yaac xastir"
 declare -A DESC
 DESC[raspbian]="Raspbian OS and Apps"
 DESC[710]="Rig Control Scripts for Kenwood 710/71A"
@@ -785,6 +787,7 @@ DESC[qsstv]="Receiving and transmitting SSTV/DSSTV"
 DESC[cqrlog]="Ham radio logger"
 DESC[gpredict]="Real time satellite tracking"
 DESC[putty]="SSH, Telnet and serial console"
+DESC[wfview]="ICOM rig control and spectrum display"
 
 # Add apps to temporarily disable from install/update process in this variable. Set to
 # empty string if there are none. Put each entry on it's own line.
@@ -1581,6 +1584,30 @@ EOF
 				else
   					echo >&2 "============= $APP install failed ================="	
   					cd $SRC_DIR
+  					rm -rf $DIR_
+  					SafeExit 1
+				fi
+			fi
+			;;
+			
+		wfview)
+         echo "======== $APP install/upgrade was requested ========="
+			if (LocalRepoUpdate wfview "$WFVIEW_GIT_URL") || [[ $FORCE == $TRUE ]]
+			then
+				CheckDepInstalled "build-essential qt5-qmake qt5-default libqt5core5a qtbase5-dev libqt5serialport5 libqt5serialport5-dev libqt5multimedia5 libqt5multimedia5-plugins qtmultimedia5-dev libqcustomplot2.0 libqcustomplot-doc libqcustomplot-dev"
+				#DIR_="$(echo ${WFVIEW_GIT_URL##*/} | sed -e 's/\.git$//')"
+				DIR_="wfview_build"
+				mkdir -p $DIR_ && cd $SRC_DIR/$DIR_
+				if qmake ../wfview/wfview.pro && make -j4
+				then 
+					sudo ./install.sh <<<"Y"
+     				echo >&2 "============= $APP installed/updated ================="
+     				cd $SRC_DIR
+     				rm -rf $DIR_
+				else
+  					echo >&2 "============= $APP install failed ================="	
+  					cd $SRC_DIR
+  					rm -rf wfview
   					rm -rf $DIR_
   					SafeExit 1
 				fi
