@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.12
+#-    version         ${SCRIPT_NAME} 2.1.13
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -791,7 +791,7 @@ DESC[wfview]="ICOM rig control and spectrum display"
 # empty string if there are none. Put each entry on it's own line.
 # Example: SUSPENDED_APPS="fldigi
 #flrig"
-SUSPENDED_APPS="fldigi"
+SUSPENDED_APPS=""
 
 MAINTAINER="ag7gn@arrl.net"
 
