@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.14
+#-    version         ${SCRIPT_NAME} 2.1.15
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -1610,16 +1610,15 @@ EOF
 			;;
 			
 		wfview)
-         echo "======== $APP install/upgrade was requested ========="
+         echo >&2 "======== $APP install/upgrade was requested ========="
 			if (LocalRepoUpdate wfview "$WFVIEW_GIT_URL") || [[ $FORCE == $TRUE ]]
 			then
 				CheckDepInstalled "build-essential qt5-qmake qt5-default libqt5core5a qtbase5-dev libqt5serialport5 libqt5serialport5-dev libqt5multimedia5 libqt5multimedia5-plugins qtmultimedia5-dev libqcustomplot2.0 libqcustomplot-doc libqcustomplot-dev"
 				#DIR_="$(echo ${WFVIEW_GIT_URL##*/} | sed -e 's/\.git$//')"
-				DIR_="wfview_build"
-				mkdir -p $DIR_ && cd $SRC_DIR/$DIR_
-				if qmake ../wfview/wfview.pro && make -j4
+				DIR_="$SRC_DIR/wfview_build"
+				mkdir -p $DIR_ && cd $DIR_
+				if qmake ../wfview/wfview.pro && make -j4 && sudo make install
 				then 
-					sudo ./install.sh <<<"Y"
      				echo >&2 "============= $APP installed/updated ================="
      				cd $SRC_DIR
      				rm -rf $DIR_
@@ -1634,7 +1633,7 @@ EOF
 			;;
 
       yaac)
-         echo "======== $APP install/upgrade was requested ========="
+         echo >&2 "======== $APP install/upgrade was requested ========="
          echo >&2 "=========== Retrieving $APP from $YAAC_URL ==========="
          mkdir -p YAAC
          cd YAAC
