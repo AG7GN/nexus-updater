@@ -1122,35 +1122,46 @@ do
       			[[ ! -z $PI_MODEL ]] && CONFIGURE="./configure --enable-optimizations=$PI_MODEL"
       		fi
       		[[ $FORCE == $TRUE ]] && make clean
-      		if $CONFIGURE && make -j4 && CheckInstall "nexus-$APP" "$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)" 1
+      		if $CONFIGURE && make -j4
       		then
-					# Fix the *.desktop files
-               FLDIGI_DESKTOPS="/usr/local/share/applications $HOME/.local/share/applications"
-               for D in ${FLDIGI_DESKTOPS}
-					do
-						for F in ${D}/fl*.desktop
-                  do
-							[ -e "$F" ] || continue
-                     sudo sed -i 's/Network;//g' $F
-                     if [[ $F == "${FLDIGI_DESKTOPS}/flrig.desktop" ]]
-                     then
-                     	grep -q "\-\-debug-level 0" ${FLDIGI_DESKTOPS}/flrig.desktop 2>/dev/null || sudo sed -i 's/Exec=flrig/Exec=flrig --debug-level 0/' $F
-                     fi
-						done
-               done  
-               [ -f /usr/local/share/applications/${APP}.desktop ] && sudo mv -f /usr/local/share/applications/${APP}.desktop /usr/local/share/applications/${APP}.desktop.disabled
-               [ -f /usr/local/share/applications/flarq.desktop ] && sudo mv -f /usr/local/share/applications/flarq.desktop /usr/local/share/applications/flarq.desktop.disabled
-               [ -f /usr/local/share/applications/flwrap.desktop.disabled ] && sudo mv -f /usr/local/share/applications/flwrap.desktop.disabled /usr/local/share/applications/flwrap.desktop
-               lxpanelctl restart
-               cd $SRC_DIR
-               echo "========= $APP installation/update done ==========="
+					sudo dpkg -r nexus-$APP
+	      		if CheckInstall "nexus-$APP" "$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)" 1
+   	   		then
+						# Fix the *.desktop files
+         	      FLDIGI_DESKTOPS="/usr/local/share/applications $HOME/.local/share/applications"
+            	   for D in ${FLDIGI_DESKTOPS}
+						do
+							for F in ${D}/fl*.desktop
+            	      do
+								[ -e "$F" ] || continue
+                  	   sudo sed -i 's/Network;//g' $F
+                     	if [[ $F == "${FLDIGI_DESKTOPS}/flrig.desktop" ]]
+                     	then
+                     		grep -q "\-\-debug-level 0" ${FLDIGI_DESKTOPS}/flrig.desktop 2>/dev/null || sudo sed -i 's/Exec=flrig/Exec=flrig --debug-level 0/' $F
+                     	fi
+							done
+               	done  
+               	[ -f /usr/local/share/applications/${APP}.desktop ] && sudo mv -f /usr/local/share/applications/${APP}.desktop /usr/local/share/applications/${APP}.desktop.disabled
+               	[ -f /usr/local/share/applications/flarq.desktop ] && sudo mv -f /usr/local/share/applications/flarq.desktop /usr/local/share/applications/flarq.desktop.disabled
+               	[ -f /usr/local/share/applications/flwrap.desktop.disabled ] && sudo mv -f /usr/local/share/applications/flwrap.desktop.disabled /usr/local/share/applications/flwrap.desktop
+               	lxpanelctl restart
+               	cd $SRC_DIR
+               	AdjustSwap
+               	echo "========= $APP installation/update done ==========="
+            	else
+               	echo >&2 "========= $APP installation/update FAILED ========="
+               	cd $SRC_DIR
+               	rm -rf $APP/
+               	AdjustSwap
+               	SafeExit 1
+            	fi
             else
-               echo >&2 "========= $APP installation/update FAILED ========="
-               cd $SRC_DIR
-               rm -rf $APP/
-               SafeExit 1
+              	echo >&2 "========= $APP build FAILED ========="
+              	cd $SRC_DIR
+              	rm -rf $APP/
+              	AdjustSwap
+              	SafeExit 1
             fi
-            AdjustSwap
          fi
 			;;
 
