@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.13
+#-    version         ${SCRIPT_NAME} 2.1.14
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -671,6 +671,8 @@ function Help () {
 	APPS[gpredict]="http://gpredict.oz9aec.net/index.php"
 	APPS[putty]="https://www.chiark.greenend.org.uk/~sgtatham/putty/"
 	APPS[wfview]="https://wfview.org/"
+	APPS[fllog]="http://www.w1hkj.com/fllog-help/"
+	APPS[flcluster]="http://www.w1hkj.com/flcluster-help/"
 	APP="$2"
 	xdg-open ${APPS[$APP]} 2>/dev/null &
 }
@@ -752,7 +754,7 @@ FLDIGI_DEPS_INSTALLED=$FALSE
 SWAP_FILE="/etc/dphys-swapfile"
 SWAP="$(grep "^CONF_SWAPSIZE" $SWAP_FILE | cut -d= -f2)"
 
-LIST="raspbian 710 arim autohotspot chirp cqrlog direwolf flamp fldigi flmsg flrig flwrap gpredict hamlib js8call linbpq linpac nexus-backup-restore nexus-iptables nexus-rmsgw nexus-updater nexus-utilities pat piardop pmon putty qsstv uronode wfview wsjtx yaac xastir"
+LIST="raspbian 710 arim autohotspot chirp cqrlog direwolf flamp flcluster fldigi fllog flmsg flrig flwrap gpredict hamlib js8call linbpq linpac nexus-backup-restore nexus-iptables nexus-rmsgw nexus-updater nexus-utilities pat piardop pmon putty qsstv uronode wfview wsjtx yaac xastir"
 declare -A DESC
 DESC[raspbian]="Raspbian OS and Apps"
 DESC[710]="Rig Control Scripts for Kenwood 710/71A"
@@ -761,7 +763,9 @@ DESC[autohotspot]="Wireless HotSpot on your Pi"
 DESC[chirp]="Radio Programming Tool"
 DESC[direwolf]="Packet Modem/TNC and APRS Encoder/Decoder"
 DESC[flamp]="Amateur Multicast Protocol tool for Fldigi"
+DESC[flcluster]="Display DX Cluster data"
 DESC[fldigi]="Fast Light DIGItal Modem"
+DESC[fllog]="QSO Logging Server"
 DESC[flmsg]="Forms Manager for Fldigi"
 DESC[flrig]="Rig Control for Fldigi"
 DESC[flwrap]="File Encapsulation for Fldigi"
@@ -1099,7 +1103,7 @@ do
    		NexusLocalRepoUpdate nexus-updater $NEXUS_UPDATER_GIT_URL
    		;;
 
-      fldigi|flamp|flmsg|flrig|flwrap)
+      flcluster|fldigi|flamp|fllog|flmsg|flrig|flwrap)
       	if (LocalRepoUpdate $APP $FLROOT_GIT_URL/$APP) || [[ $FORCE == $TRUE ]]
       	then
 				if [[ $FLDIGI_DEPS_INSTALLED == $FALSE ]]
@@ -1124,7 +1128,7 @@ do
       		[[ $FORCE == $TRUE ]] && make clean
       		if $CONFIGURE && make -j4
       		then
-					sudo dpkg -r nexus-$APP
+					#sudo dpkg -r nexus-$APP
 	      		if CheckInstall "nexus-$APP" "$(cat Makefile | grep "^PACKAGE_VERSION" | tr -d ' \t' | cut -d= -f2)" 1
    	   		then
 						# Fix the *.desktop files
@@ -1140,8 +1144,14 @@ do
                      		grep -q "\-\-debug-level 0" ${FLDIGI_DESKTOPS}/flrig.desktop 2>/dev/null || sudo sed -i 's/Exec=flrig/Exec=flrig --debug-level 0/' $F
                      	fi
 							done
-               	done  
-               	[ -f /usr/local/share/applications/${APP}.desktop ] && sudo mv -f /usr/local/share/applications/${APP}.desktop /usr/local/share/applications/${APP}.desktop.disabled
+               	done
+               	case $APP in
+               		fldigi|flrig|flmsg)
+               			[ -f /usr/local/share/applications/${APP}.desktop ] && sudo mv -f /usr/local/share/applications/${APP}.desktop /usr/local/share/applications/${APP}.desktop.disabled
+               			;;
+               		*)
+               			;;
+               	esac
                	[ -f /usr/local/share/applications/flarq.desktop ] && sudo mv -f /usr/local/share/applications/flarq.desktop /usr/local/share/applications/flarq.desktop.disabled
                	[ -f /usr/local/share/applications/flwrap.desktop.disabled ] && sudo mv -f /usr/local/share/applications/flwrap.desktop.disabled /usr/local/share/applications/flwrap.desktop
                	lxpanelctl restart
