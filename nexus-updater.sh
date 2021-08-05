@@ -479,7 +479,7 @@ function GenerateList () {
 		if echo "$SUSPENDED_APPS" | grep -qx "$A"
 		then
 			# App has been suspended. Apply special formatting.
-			echo -e "FALSE\n${WARN_OPEN}<s>$A</s>${WARN_CLOSE}\n${WARN_OPEN}<s>${DESC[$A]}</s>${WARN_CLOSE}\n${WARN_OPEN}SUSPENDED - serious bug(s)${WARN_CLOSE}" >> "$TFILE"
+			echo -e "FALSE\n${WARN_OPEN}<s>$A</s>${WARN_CLOSE}\n${WARN_OPEN}<s>${DESC[$A]}</s>${WARN_CLOSE}\n${WARN_OPEN}SUSPENDED pending bug fixes${WARN_CLOSE}" >> "$TFILE"
 		else
 			case $A in
 				nexus-iptables|autohotspot|raspbian)
@@ -791,7 +791,7 @@ DESC[wfview]="ICOM rig control and spectrum display"
 # empty string if there are none. Put each entry on it's own line.
 # Example: SUSPENDED_APPS="fldigi
 #flrig"
-SUSPENDED_APPS=""
+SUSPENDED_APPS="flmsg"
 
 MAINTAINER="ag7gn@arrl.net"
 
