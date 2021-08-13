@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.15
+#-    version         ${SCRIPT_NAME} 2.1.16
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -795,7 +795,7 @@ DESC[wfview]="ICOM rig control and spectrum display"
 # empty string if there are none. Put each entry on it's own line.
 # Example: SUSPENDED_APPS="fldigi
 #flrig"
-SUSPENDED_APPS="flmsg"
+SUSPENDED_APPS=""
 
 MAINTAINER="ag7gn@arrl.net"
 
@@ -1119,12 +1119,18 @@ do
       		AdjustSwap 2048
       		cd $APP
       		autoreconf -f -i || { echo >&2 "======= autoreconf -f -i failed ========"; SafeExit 1; }
-      		CONFIGURE="./configure"
-      		if [[ $APP == "fldigi" ]]
-      		then
-      			PI_MODEL=$(PiModel)
-      			[[ ! -z $PI_MODEL ]] && CONFIGURE="./configure --enable-optimizations=$PI_MODEL"
-      		fi
+      		case $APP in
+      			fldigi)
+      				PI_MODEL=$(PiModel)
+      				[[ ! -z $PI_MODEL ]] && CONFIGURE="./configure --enable-optimizations=$PI_MODEL" || CONFIGURE="./configure"
+      				;;
+      			flmsg)
+      				CONFIGURE="./configure --without-flxmlrpc"
+      				;;
+      			*)
+		      		CONFIGURE="./configure"
+						;;
+				esac      				
       		[[ $FORCE == $TRUE ]] && make clean
       		if $CONFIGURE && make -j4
       		then
