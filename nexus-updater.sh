@@ -1287,6 +1287,7 @@ EOF
                then
                	echo >&2 "Done."
                	sudo apt-mark hold direwolf
+               	sudo cp -f cmake/cpack/direwolf_icon.png /usr/local/share/pixmaps/
                	[ -f /usr/local/share/applications/direwolf.desktop ] && sudo mv -f /usr/local/share/applications/direwolf.desktop /usr/local/share/applications/direwolf.desktop.disabled
                	echo "========= $APP installation complete ==========="
                else
