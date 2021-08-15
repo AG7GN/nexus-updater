@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.16
+#-    version         ${SCRIPT_NAME} 2.1.17
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -1037,11 +1037,6 @@ fi
 sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list
 sudo sed -i 's/^#deb-src/deb-src/' /etc/apt/sources.list.d/raspi.list
 
-CheckDepInstalled "extra-xdg-menus bc dnsutils libgtk-3-bin jq xdotool moreutils exfat-utils build-essential autoconf automake libtool checkinstall git aptitude python3-tabulate python3-pip dos2unix firefox-esr"
-
-DEFAULT_BROWSER="$(xdg-settings get default-web-browser)"
-[[ $DEFAULT_BROWSER =~ firefox ]] || xdg-settings set default-web-browser firefox-esr.desktop
-
 # Check age of apt cache. Run apt update if more than 2 hours old
 LAST_APT_UPDATE=$(stat -c %Z /var/lib/apt/lists/partial)
 NOW=$(date +%s)
@@ -1053,6 +1048,11 @@ then
 #else
 #	echo >&2 "apt cache less than an hour old"
 fi
+
+CheckDepInstalled "extra-xdg-menus bc dnsutils libgtk-3-bin jq xdotool moreutils exfat-utils build-essential autoconf automake libtool checkinstall git aptitude python3-tabulate python3-pip dos2unix firefox-esr"
+
+DEFAULT_BROWSER="$(xdg-settings get default-web-browser)"
+[[ $DEFAULT_BROWSER =~ firefox ]] || xdg-settings set default-web-browser firefox-esr.desktop
 
 APPS="$(echo "${1,,}" | tr ',' '\n' | sort -u)"
 for SUSPENDED_APP in $SUSPENDED_APPS
