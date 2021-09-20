@@ -42,7 +42,7 @@
 #%    
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 2.1.17
+#-    version         ${SCRIPT_NAME} 2.1.18
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -1620,7 +1620,7 @@ EOF
          echo >&2 "======== $APP install/upgrade was requested ========="
 			if (LocalRepoUpdate wfview "$WFVIEW_GIT_URL") || [[ $FORCE == $TRUE ]]
 			then
-				CheckDepInstalled "build-essential qt5-qmake qt5-default libqt5core5a qtbase5-dev libqt5serialport5 libqt5serialport5-dev libqt5multimedia5 libqt5multimedia5-plugins qtmultimedia5-dev libqcustomplot2.0 libqcustomplot-doc libqcustomplot-dev"
+				CheckDepInstalled "build-essential qt5-qmake qt5-default libqt5core5a qtbase5-dev libqt5serialport5 libqt5serialport5-dev libqt5multimedia5 libqt5multimedia5-plugins qtmultimedia5-dev libqcustomplot2.0 libqcustomplot-doc libqcustomplot-dev libopus-dev"
 				#DIR_="$(echo ${WFVIEW_GIT_URL##*/} | sed -e 's/\.git$//')"
 				DIR_="$SRC_DIR/wfview_build"
 				mkdir -p $DIR_ && cd $DIR_
